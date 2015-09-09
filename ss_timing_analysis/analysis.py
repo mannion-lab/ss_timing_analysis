@@ -1,9 +1,12 @@
 
 import numpy as np
 import scipy.optimize
+import scipy.stats
 
 import ss_timing.conf
 import ss_timing.data
+
+import ss_timing_analysis.conf
 
 
 def get_subj_psi_alpha(conf):
@@ -39,6 +42,31 @@ def get_subj_psi_alpha(conf):
     assert np.sum(np.isnan(data))
 
     return data
+
+
+def get_all_fit_params():
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    fit_params = np.empty(
+        (
+            conf.n_subj,
+            conf.n_surr_onsets,
+            conf.n_surr_oris,
+            2
+        )
+    )
+    fit_params.fill(np.NAN)
+
+    for (i_subj, subj_id) in enumerate(conf.subj_ids):
+
+        conf.subj_id = subj_id
+
+        fit_params[i_subj, ...] = get_fit_params(conf)
+
+    assert np.sum(np.isnan(fit_params)) == 0
+
+    return fit_params
 
 
 def get_fit_params(conf):
@@ -107,7 +135,7 @@ def get_subj_resp_data(conf):
 
 def fit_cond(conf, cond_data):
 
-    p0 = [np.mean(conf.x_levels), 1]
+    p0 = [scipy.stats.gmean(conf.x_levels), 2.0]
 
     alpha_bounds = [conf.x_levels[0], conf.x_levels[-1]]
 
@@ -136,7 +164,10 @@ def loglike(params, cond_data, conf):
         beta=beta
     )
 
-    assert np.sum(np.isnan(p)) == 0
+    try:
+        assert np.sum(np.isnan(p)) == 0
+    except:
+        print alpha, beta
 
     resp_was_incorrect = (cond_data[:, 1] == 0)
 
