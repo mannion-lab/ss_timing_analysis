@@ -37,7 +37,7 @@ def plot_subj_fits(subj_id):
         100
     )
 
-    n_bins = 20
+    n_bins = 50
     bins = np.logspace(
         np.log10(min_c),
         np.log10(max_c),
@@ -165,6 +165,8 @@ def plot_subj_conds(subj_id):
     ax.set_xlim([-0.25, 1.25])
     ax.set_xticks([0, 1])
     ax.set_xticklabels(conf.surr_ori_labels)
+
+    ax.set_yscale("log")
 
     ax.set_xlabel("Surround orientation")
     ax.set_ylabel("Detection threshold")
