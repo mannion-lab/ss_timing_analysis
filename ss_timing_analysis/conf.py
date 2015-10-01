@@ -1,16 +1,20 @@
 import os
 
+import numpy as np
+
 import xlrd
 
 import ss_timing.conf
 
 
-def get_conf():
+def get_conf(subj_id=""):
 
-    conf = ss_timing.conf.get_conf("")
+    conf = ss_timing.conf.get_conf(subj_id)
 
     conf.demographics_path = "/home/damien/venv_study/ss_timing/demographics"
     conf.demographics_date = "20151002"
+
+    conf.group_data_path = "/home/damien/venv_study/ss_timing/group_data"
 
     conf.surr_ori_labels = ["orth", "para"]
 
@@ -36,6 +40,21 @@ def get_conf():
     conf.n_subj = len(conf.subj_ids)
 
     conf.demographics = demographics(conf)
+
+    conf.log_bin_size = 0.03
+
+    conf.log_bin_edges = np.arange(
+        np.log10(0.001) - conf.log_bin_size / 2.0,
+        np.log10(1.0) + conf.log_bin_size / 2.0,
+        conf.log_bin_size
+    )
+    conf.bin_edges = 10 ** conf.log_bin_edges
+
+    conf.n_bins = len(conf.bin_edges)
+
+    conf.log_bin_centres = conf.log_bin_edges - conf.log_bin_size / 2.0
+    conf.bin_centres = 10 ** conf.log_bin_centres
+
 
     return conf
 
