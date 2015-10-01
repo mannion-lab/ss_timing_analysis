@@ -10,20 +10,29 @@ def get_conf():
     conf = ss_timing.conf.get_conf("")
 
     conf.demographics_path = "/home/damien/venv_study/ss_timing/demographics"
-    conf.demographics_date = "20150909"
+    conf.demographics_date = "20151002"
 
     conf.surr_ori_labels = ["orth", "para"]
 
     conf.exclude_ids = [
-        1040  # started but wrong experiment
+        "p1040"  # started but wrong experiment
+    ]
+
+    min_id = 1001
+    max_id = 1079
+
+    conf.all_subj_ids = [
+        "p{n:d}".format(n=n)
+        for n in range(min_id, max_id + 1)
     ]
 
     conf.subj_ids = [
-        "p{n:d}".format(n=n)
-        for n in range(1001, 1042)
-        if n not in conf.exclude_ids
+        subj_id
+        for subj_id in conf.all_subj_ids
+        if subj_id not in conf.exclude_ids
     ]
 
+    conf.n_all_subj = len(conf.all_subj_ids)
     conf.n_subj = len(conf.subj_ids)
 
     conf.demographics = demographics(conf)
@@ -64,6 +73,5 @@ def demographics(conf):
             dem[subj_id]["IntAnh"] +
             dem[subj_id]["UnEx"]
         )
-
 
     return dem
