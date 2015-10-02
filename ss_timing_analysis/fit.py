@@ -66,11 +66,11 @@ def fit_data_ml(data, conf):
 
 def fit_cond_ml(data, conf):
 
-    p0 = [scipy.stats.gmean(conf.x_levels), 2.0]
+    p0 = [0.03, 5.0]
 
     alpha_bounds = [conf.x_levels[0], conf.x_levels[-1]]
 
-    beta_bounds = [0.0, None]
+    beta_bounds = [0.001, None]
 
     fit = scipy.optimize.minimize(
         loglike,
