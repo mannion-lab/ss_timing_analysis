@@ -1,13 +1,169 @@
 
 import numpy as np
 
-import matplotlib.pyplot as plt
+import veusz.embed
 
 import figutils
-figutils.set_defaults()
 
 import ss_timing_analysis.conf
-import ss_timing_analysis.analysis
+import ss_timing_analysis.group_data
+import ss_timing_analysis.group_fit
+
+
+def subjects(save_pdf=True):
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    # subj x onsets x oris x bins x (prop, n)
+    data = ss_timing_analysis.group_data.bin_group_data()
+
+    # fit is: subj x onsets x oris x (a, b) x (est, 2.5, 97.5)
+    # fit_fine is: subj x onsets x oris x X x 2 (2.5, 97.5)
+    (fit, fit_fine) = ss_timing_analysis.group_fit.load_fit_data()
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    embed.SetData("bin_centres", conf.bin_centres)
+    embed.SetData("fine_x", conf.fine_x)
+
+    for (i_subj, subj_id) in enumerate(conf.all_subj_ids):
+
+        page = embed.Root.Add("page")
+
+        page.width.val = "15cm"
+        page.height.val = "15cm"
+
+        label = page.Add("label")
+
+        label.label.val = subj_id
+        label.yPos.val = 0.95
+
+        if subj_id in conf.exclude_ids:
+            label.label.val += " (excluded)"
+            label.Text.color.val = "red"
+
+        grid = page.Add("grid")
+
+        grid.rows.val = 2
+        grid.columns.val = 2
+
+        grid.leftMargin.val = grid.rightMargin.val = "0cm"
+        grid.topMargin.val = "1.2cm"
+        grid.bottomMargin.val = "0cm"
+
+        for i_onset in xrange(conf.n_surr_onsets):
+            for i_ori in xrange(conf.n_surr_oris):
+
+                graph = grid.Add("graph", autoadd=False)
+
+                x_axis = graph.Add("axis")
+                y_axis = graph.Add("axis")
+
+                cond_label = graph.Add("label")
+
+                cond_label.label.val = (
+                    "Onset: " + conf.surr_onsets[i_onset] + "; " +
+                    "Ori: " + conf.surr_ori_labels[i_ori]
+                )
+                cond_label.yPos.val = 1.02
+                cond_label.xPos.val = 0.22
+
+                # CROSSHAIRS
+                pse_y = graph.Add("xy")
+                pse_y.xData.val = [0.001, fit[i_subj, i_onset, i_ori, 0, 0]]
+                pse_y.yData.val = [1 - np.exp(-1) + 0.04] * 2
+
+                pse_x = graph.Add("xy")
+                pse_x.xData.val = [fit[i_subj, i_onset, i_ori, 0, 0]] * 2
+                pse_x.yData.val = [-0.05, 1 - np.exp(-1) + 0.04]
+
+                for pse_ax in (pse_y, pse_x):
+                    pse_ax.MarkerFill.hide.val = True
+                    pse_ax.MarkerLine.hide.val = True
+                    pse_ax.PlotLine.style.val = "dashed"
+
+
+                # POINTS
+                points = graph.Add("xy")
+
+                prop_name = "resp_prop_{s:d}_{t:d}_{o:d}".format(
+                    s=i_subj, t=i_onset, o=i_ori
+                )
+
+                embed.SetData(
+                    prop_name,
+                    data[i_subj, i_onset, i_ori, :, 0]
+                )
+
+                k_name = "resp_k_{s:d}_{t:d}_{o:d}".format(
+                    s=i_subj, t=i_onset, o=i_ori
+                )
+
+                embed.SetData(
+                    k_name,
+                    data[i_subj, i_onset, i_ori, :, 1] * 0.05
+                )
+
+                points.xData.val = "bin_centres"
+                points.yData.val = prop_name
+
+                points.scalePoints.val = k_name
+
+                points.MarkerLine.hide.val = True
+                points.MarkerFill.transparency.val = 50
+                points.PlotLine.hide.val = True
+                points.MarkerFill.color.val = "blue"
+
+                # FIT
+                fit_plot = graph.Add("xy")
+
+                fit_name = "fit_{s:d}_{t:d}_{o:d}".format(
+                    s=i_subj, t=i_onset, o=i_ori
+                )
+
+                fit_y = conf.psych_func(
+                    conf.fine_x,
+                    alpha=fit[i_subj, i_onset, i_ori, 0, 0],
+                    beta=fit[i_subj, i_onset, i_ori, 1, 0]
+                )
+
+                embed.SetData(
+                    fit_name,
+                    fit_y,
+                    poserr=np.abs(
+                        fit_fine[i_subj, i_onset, i_ori, :, 1] - fit_y
+                    ),
+                    negerr=np.abs(
+                        fit_fine[i_subj, i_onset, i_ori, :, 0] - fit_y
+                    )
+                )
+
+                fit_plot.xData.val = "fine_x"
+                fit_plot.yData.val = fit_name
+
+                fit_plot.MarkerFill.hide.val = True
+                fit_plot.MarkerLine.hide.val = True
+                fit_plot.errorStyle.val = "fillvert"
+                fit_plot.ErrorBarLine.hide.val = True
+
+                x_axis.log.val = True
+                x_axis.label.val = "Contrast"
+                x_axis.TickLabels.format.val = "%.3g"
+                x_axis.MajorTicks.manualTicks.val = [0.001, 0.01, 0.1, 0.5, 1]
+
+                y_axis.min.val = -0.05
+                y_axis.max.val = 1.05
+                y_axis.label.val = "Accuracy (%)"
+
+
+    if save_pdf is False:
+        embed.EnableToolbar(True)
+        embed.WaitForClose()
+        embed.Save("/home/damien/ss.vsz")
+    else:
+        embed.Export("/home/damien/ss_1000.pdf", page=range(conf.n_all_subj))
+        embed.Close()
 
 
 def plot_subj_fits(subj_id):

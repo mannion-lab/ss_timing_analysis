@@ -71,6 +71,7 @@ def bin_group_data():
     )
 
     for i_s in xrange(conf.n_all_subj):
+
         for i_onset in xrange(conf.n_surr_onsets):
             for i_ori in xrange(conf.n_surr_oris):
 
