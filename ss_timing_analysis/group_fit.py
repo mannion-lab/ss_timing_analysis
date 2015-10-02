@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import scipy.stats
 
@@ -8,8 +10,6 @@ import ss_timing_analysis.group_data
 def fit_data():
 
     conf = ss_timing_analysis.conf.get_conf()
-
-    conf.n_all_subj = 1
 
     data = ss_timing_analysis.group_data.load_group_data()
 

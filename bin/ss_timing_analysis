@@ -1,0 +1,5 @@
+#!/usr/bin/env python
+
+import ss_timing_analysis.run
+
+ss_timing_analysis.run.main()
