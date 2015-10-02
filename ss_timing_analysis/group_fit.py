@@ -5,6 +5,7 @@ import scipy.stats
 
 import ss_timing_analysis.conf
 import ss_timing_analysis.group_data
+import ss_timing_analysis.fit
 
 
 def fit_data():
