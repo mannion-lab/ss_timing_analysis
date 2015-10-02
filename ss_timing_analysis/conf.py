@@ -18,8 +18,10 @@ def get_conf(subj_id=""):
 
     conf.surr_ori_labels = ["orth", "para"]
 
-    conf.exclude_ids = [
-        "p1040"  # started but wrong experiment
+    conf.exclude_ids = []
+
+    conf.missing_ids = [
+        1040  # started but wrong experiment
     ]
 
     min_id = 1001
@@ -28,6 +30,7 @@ def get_conf(subj_id=""):
     conf.all_subj_ids = [
         "p{n:d}".format(n=n)
         for n in range(min_id, max_id + 1)
+        if n not in conf.missing_ids
     ]
 
     conf.subj_ids = [
