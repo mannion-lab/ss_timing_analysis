@@ -55,6 +55,11 @@ def get_conf(subj_id=""):
     conf.log_bin_centres = conf.log_bin_edges - conf.log_bin_size / 2.0
     conf.bin_centres = 10 ** conf.log_bin_centres
 
+    conf.fine_x = np.logspace(np.log10(0.001), np.log10(1.0), 100)
+    conf.n_fine_x = len(conf.fine_x)
+
+    conf.n_boot = 10000
+    conf.boot_seed = 2118217324
 
     return conf
 
