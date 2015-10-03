@@ -36,6 +36,17 @@ def fit_data():
     )
     fit_fine_boot.fill(np.NAN)
 
+    boot_all = np.empty(
+        (
+            conf.n_all_subj,
+            conf.n_surr_onsets,
+            conf.n_surr_oris,
+            2,
+            conf.n_boot
+        )
+    )
+    boot_all.fill(np.NAN)
+
     np.random.seed(conf.boot_seed)
 
     for i_subj in xrange(conf.n_all_subj):
@@ -47,6 +58,8 @@ def fit_data():
             conf=conf,
             n_boot=conf.n_boot
         )
+
+        boot_all[i_subj, ...] = boot_data[..., 1:]
 
         # first is without bootstrapping
         fit_params[i_subj, ..., 0] = boot_data[..., 0]
@@ -90,10 +103,11 @@ def fit_data():
     np.savez(
         npz_path,
         fit_params=fit_params,
-        fit_fine=fit_fine
+        fit_fine=fit_fine,
+        boot_all=boot_all
     )
 
-    return (fit_params, fit_fine)
+    return (fit_params, fit_fine, boot_all)
 
 
 def load_fit_data():
@@ -107,4 +121,4 @@ def load_fit_data():
 
     fit = np.load(npz_path)
 
-    return (fit["fit_params"], fit["fit_fine"])
+    return (fit["fit_params"], fit["fit_fine"], fit["boot_all"])

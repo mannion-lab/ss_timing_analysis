@@ -19,7 +19,7 @@ def subjects(save_pdf=True):
 
     # fit is: subj x onsets x oris x (a, b) x (est, 2.5, 97.5)
     # fit_fine is: subj x onsets x oris x X x 2 (2.5, 97.5)
-    (fit, fit_fine) = ss_timing_analysis.group_fit.load_fit_data()
+    (fit, fit_fine, _) = ss_timing_analysis.group_fit.load_fit_data()
 
     embed = veusz.embed.Embedded("veusz")
     figutils.set_veusz_style(embed)
@@ -100,9 +100,13 @@ def subjects(save_pdf=True):
                     s=i_subj, t=i_onset, o=i_ori
                 )
 
+                point_scale = np.sqrt(
+                    (data[i_subj, i_onset, i_ori, :, 1] * 1) / np.pi
+                ) * 2 * 0.35
+
                 embed.SetData(
                     k_name,
-                    data[i_subj, i_onset, i_ori, :, 1] * 0.05
+                    point_scale
                 )
 
                 points.xData.val = "bin_centres"
