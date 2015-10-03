@@ -18,7 +18,14 @@ def get_conf(subj_id=""):
 
     conf.surr_ori_labels = ["orth", "para"]
 
-    conf.exclude_ids = []
+    conf.exclude_ids = [
+        "p1027",
+        "p1039",
+        "p1048",
+        "p1051",
+        "p1060",
+        "p1079"
+    ]
 
     conf.missing_ids = [
         1040  # started but wrong experiment
