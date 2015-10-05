@@ -110,7 +110,7 @@ def fit_data():
     return (fit_params, fit_fine, boot_all)
 
 
-def load_fit_data():
+def load_fit_data(exclude=False):
 
     conf = ss_timing_analysis.conf.get_conf()
 
@@ -121,4 +121,34 @@ def load_fit_data():
 
     fit = np.load(npz_path)
 
-    return (fit["fit_params"], fit["fit_fine"], fit["boot_all"])
+    fit_params = fit["fit_params"]
+    fit_fine = fit["fit_fine"]
+    fit_boot = fit["boot_all"]
+
+    if exclude:
+
+        # work out which indices correspond to the bad subjects
+        i_bad = [
+            conf.all_subj_ids.index(bad_subj_id)
+            for bad_subj_id in conf.exclude_ids
+        ]
+
+        fit_params = np.delete(
+            fit_params,
+            i_bad,
+            axis=0
+        )
+
+        fit_fine = np.delete(
+            fit_fine,
+            i_bad,
+            axis=0
+        )
+
+        fit_boot = np.delete(
+            fit_boot,
+            i_bad,
+            axis=0
+        )
+
+    return (fit_params, fit_fine, fit_boot)
