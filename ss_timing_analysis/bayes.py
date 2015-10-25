@@ -35,119 +35,119 @@ def model():
     sz = sz - np.mean(sz)
     sz = sz[:, np.newaxis, np.newaxis]
 
-    thresh_a0 = pm.Normal(
-        "thresh_a0",
-        mu=np.log(0.25),
-        tau=np.log(2) ** -2,
-        trace=False,
-        plot=False,
-        value=np.log(0.25)
-    )
-
-    # deflection due to schizotypy
-    thresh_bZ = pm.Normal(
-        "thresh_bZ",
-        mu=0.0,
-        tau=0.001,
-        trace=False,
-        plot=False,
-        value=0.0
-    )
-
-    thresh_params = [
+    info = [
         {
-            "name": "aS",
+            "name": "bS",
             "size": (conf.n_all_subj, 1, 1)
         },
         {
-            "name": "aD",
+            "name": "bD",
             "size": (1, conf.n_surr_onsets, 1)
         },
         {
-            "name": "aT",
+            "name": "bT",
             "size": (1, 1, conf.n_surr_oris)
         },
         {
-            "name": "aSxD",
-            "size": (conf.n_all_subj, conf.n_surr_onsets, 1)
-        },
-        {
-            "name": "aSxT",
-            "size": (conf.n_all_subj, 1, conf.n_surr_oris)
-        },
-        {
-            "name": "aDxT",
+            "name": "bDxT",
             "size": (1, conf.n_surr_onsets, conf.n_surr_oris)
         },
         {
-            "name": "aSxDxT",
-            "size": (conf.n_all_subj, conf.n_surr_onsets, conf.n_surr_oris)
-        },
-        {
-            "name": "aDxZ",
+            "name": "bDxZ",
             "size": (1, conf.n_surr_onsets, 1)
         },
         {
-            "name": "aTxZ",
+            "name": "bTxZ",
             "size": (1, 1, conf.n_surr_oris)
         },
         {
-            "name": "aDxTxZ",
+            "name": "bDxTxZ",
             "size": (1, conf.n_surr_onsets, conf.n_surr_oris)
         }
     ]
 
-    thresh_sigmas = {}
-    thresh_normals = {}
+    b0_mu = {
+        "thresh": np.log(0.25),
+        "slope": 1.0
+    }
 
-    for param_dict in thresh_params:
+    b0_tau = {
+        "thresh": np.log(2) ** -2.0,
+        "slope": 10.0 ** -2.0
+    }
 
-        sigma_name = "thresh_" + param_dict["name"] + "_sigma"
+    b0_val = {
+        "thresh": np.log(0.1),
+        "slope": 1.0
+    }
 
-        thresh_sigmas[sigma_name] = pm.Uniform(
-            sigma_name,
-            lower=0.0,
-            upper=10.0,
-            value=0.1
+    params = {}
+
+    for p_type in ("thresh", "slope"):
+
+        params[p_type + "_b0"] = pm.Normal(
+            p_type + "_b0",
+            mu=b0_mu[p_type],
+            tau=b0_tau[p_type],
+            value=b0_val[p_type]
         )
 
-        norm_name = "thresh_" + param_dict["name"]
-
-        thresh_normals[norm_name] = pm.Normal(
-            norm_name,
+        params[p_type + "_bZ"] = pm.Normal(
+            p_type + "_bZ",
             mu=0.0,
-            tau=thresh_sigmas[sigma_name] ** -2.0,
-            trace=False,
-            plot=False,
-            size=param_dict["size"]
+            tau=0.001,
+            value=0.0
         )
 
-    @pm.deterministic(plot=False, trace=True)
-    def thresh_cells(
-        thresh_a0=thresh_a0,
-        thresh_bZ=thresh_bZ,
-        thresh_normals=thresh_normals,
-        sz=sz
-    ):
+        for param_info in info:
+
+            sig_name = p_type + "_" + param_info["name"] + "_sigma"
+
+            params[sig_name] = pm.Uniform(
+                sig_name,
+                lower=0.0,
+                upper=10.0,
+                value=0.1
+            )
+
+            norm_name = p_type + "_" + param_info["name"]
+
+            params[norm_name] = pm.Normal(
+                norm_name,
+                mu=0.0,
+                tau=params[sig_name] ** -2.0,
+                size=param_info["size"]
+            )
+
+    @pm.deterministic
+    def thresh(params=params, sz=sz):
 
         return (
-            thresh_a0 +
-            thresh_bZ * sz +
-            thresh_normals["thresh_aS"] +
-            thresh_normals["thresh_aD"] +
-            thresh_normals["thresh_aT"] +
-            thresh_normals["thresh_aSxD"] +
-            thresh_normals["thresh_aSxT"] +
-            thresh_normals["thresh_aDxT"] +
-            thresh_normals["thresh_aSxDxT"] +
-            thresh_normals["thresh_aDxZ"] * sz +
-            thresh_normals["thresh_aTxZ"] * sz +
-            thresh_normals["thresh_aDxTxZ"] * sz
+            params["thresh_b0"] +
+            params["thresh_bZ"] * sz +
+            params["thresh_bS"] +
+            params["thresh_bD"] +
+            params["thresh_bT"] +
+            params["thresh_bDxT"] +
+            params["thresh_bDxZ"] * sz +
+            params["thresh_bTxZ"] * sz +
+            params["thresh_bDxTxZ"] * sz
         )
 
+    @pm.deterministic
+    def slope(params=params, sz=sz):
 
-    thresh = np.random.rand(78, 2, 2)
-    slope = np.random.rand(78, 2, 2)
+        return (
+            params["slope_b0"] +
+            params["slope_bZ"] * sz +
+            params["slope_bS"] +
+            params["slope_bD"] +
+            params["slope_bT"] +
+            params["slope_bDxT"] +
+            params["slope_bDxZ"] * sz +
+            params["slope_bTxZ"] * sz +
+            params["slope_bDxTxZ"] * sz
+        )
 
     @pm.deterministic
     def psych_func(
@@ -175,14 +175,16 @@ def model():
         value=responses
     )
 
-    params = [
-        psych_func,
-        obs,
-        thresh_cells
-    ]
-    params.extend(thresh_sigmas.values())
-    params.extend(thresh_normals.values())
+    param_list = params.values()
+    param_list.extend(
+        [
+            psych_func,
+            obs,
+            thresh,
+            slope
+        ]
+    )
 
-    model = pm.Model(params)
+    model = pm.Model(param_list)
 
     return model
