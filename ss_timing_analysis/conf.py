@@ -26,7 +26,8 @@ def get_conf(subj_id=""):
         "p1048",
         "p1051",
         "p1060",
-        "p1079"
+        "p1079",
+        "p1098"
     ]
 
     conf.missing_ids = [

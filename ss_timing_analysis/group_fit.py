@@ -133,6 +133,19 @@ def load_fit_data(exclude=False):
             for bad_subj_id in conf.exclude_ids
         ]
 
+        # first, just check that this does what we think it does
+        all_subj_ids = np.array(conf.all_subj_ids)
+        subj_ids = np.delete(all_subj_ids, i_bad)
+        assert list(subj_ids) == conf.subj_ids
+
+        # also check that our manual conf exclusions are the same as calculated
+        # from the data
+        assert (
+            conf.exclude_ids == group_fit_exclusions()
+        )
+
+        # righto, now actually do it
+
         fit_params = np.delete(
             fit_params,
             i_bad,
@@ -152,3 +165,45 @@ def load_fit_data(exclude=False):
         )
 
     return (fit_params, fit_fine, fit_boot)
+
+
+def group_fit_exclusions():
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    (fit, _, _) = load_fit_data()
+
+    # just look at the slope parameters
+    fit = fit[..., 1, 0]
+
+    bad_ids = set()
+
+    for i_onset in xrange(conf.n_surr_onsets):
+        for i_ori in xrange(conf.n_surr_oris):
+
+            cutoff = (
+                np.mean(fit[:, i_onset, i_ori]) -
+                2 * np.std(fit[:, i_onset, i_ori], ddof=1)
+            )
+
+            i_bad = np.argwhere(fit[:, i_onset, i_ori] < cutoff)
+
+            bad_ids.update(
+                [
+                    conf.all_subj_ids[i_curr_bad]
+                    for i_curr_bad in i_bad
+                ]
+            )
+
+    bad_ids = list(bad_ids)
+    bad_ids.sort()
+
+    return bad_ids
+
+
+
+
+
+
+
+
