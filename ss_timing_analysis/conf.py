@@ -12,11 +12,13 @@ def get_conf(subj_id=""):
     conf = ss_timing.conf.get_conf(subj_id)
 
     conf.demographics_path = "/home/damien/venv_study/ss_timing/demographics"
-    conf.demographics_date = "20151002"
+    conf.demographics_date = "20151019"
 
     conf.group_data_path = "/home/damien/venv_study/ss_timing/group_data"
+    conf.figures_path = "/home/damien/venv_study/ss_timing/figures"
 
-    conf.surr_ori_labels = ["orth", "para"]
+    conf.surr_ori_labels = ["Orthogonal", "Parallel"]
+    conf.surr_onset_labels = ["Leading surround", "Simultaneous"]
 
     conf.exclude_ids = [
         "p1027",
@@ -32,7 +34,7 @@ def get_conf(subj_id=""):
     ]
 
     min_id = 1001
-    max_id = 1079
+    max_id = 1101
 
     conf.all_subj_ids = [
         "p{n:d}".format(n=n)
