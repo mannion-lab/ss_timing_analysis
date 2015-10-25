@@ -1,4 +1,5 @@
 import os
+import collections
 
 import numpy as np
 
@@ -112,3 +113,80 @@ def demographics(conf):
         )
 
     return dem
+
+
+def print_demographics(conf, exclude=True):
+
+    if exclude:
+        subj_ids = conf.subj_ids
+    else:
+        subj_ids = conf.all_subj_ids
+
+    n = len(subj_ids)
+
+    ###
+    print "Age:"
+
+    ages = [
+        int(conf.demographics[subj_id]["Age"])
+        for subj_id in subj_ids
+    ]
+
+    age_counts = collections.Counter(ages)
+
+    for (age, count) in age_counts.iteritems():
+        print "\t{a:d}: {c:d}/{n:d}".format(
+            a=age, c=count, n=n
+        )
+
+    ###
+    print "Gender:"
+
+    genders = [
+        conf.demographics[subj_id]["Gender"]
+        for subj_id in subj_ids
+    ]
+
+    gender_counts = collections.Counter(genders)
+
+    for (gender, count) in gender_counts.iteritems():
+        print "\t{g:s}: {c:d}/{n:d}".format(
+            g=gender, c=count, n=n
+        )
+
+    ###
+    print "Handedness:"
+
+    hands = [
+        conf.demographics[subj_id]["Handedness"]
+        for subj_id in subj_ids
+    ]
+
+    hand_counts = collections.Counter(hands)
+
+    for (hand, count) in hand_counts.iteritems():
+        print "\t{h:s}: {c:d}/{n:d}".format(
+            h=hand, c=count, n=n
+        )
+
+def print_olt_descriptives(conf, exclude=True):
+
+    if exclude:
+        subj_ids = conf.subj_ids
+    else:
+        subj_ids = conf.all_subj_ids
+
+    sz = [
+        conf.demographics[subj_id]["olt"]
+        for subj_id in subj_ids
+    ]
+
+    print "Mean: {m:.3f}".format(m=np.mean(sz))
+    print "Std: {s:.3f}".format(s=np.std(sz, ddof=1))
+    print "Min: {m:.3f}".format(m=np.min(sz))
+    print "Max: {m:.3f}".format(m=np.max(sz))
+
+
+
+
+
