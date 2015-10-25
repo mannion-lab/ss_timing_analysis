@@ -31,7 +31,8 @@ def main():
         "fit_data",
         "subjects_figure",
         "eg_subject_figure",
-        "thresholds"
+        "thresholds",
+        "sim_scatter"
     ]
 
     parser.add_argument(
@@ -59,4 +60,7 @@ def main():
 
     elif args.analysis == "thresholds":
         ss_timing_analysis.figures.thresholds(save_pdf=True)
+
+    elif args.analysis == "sim_scatter":
+        ss_timing_analysis.figures.sim_scatter(save_pdf=True)
 

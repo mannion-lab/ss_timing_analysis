@@ -5,6 +5,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 import numpy as np
+import scipy.stats
 
 import veusz.embed
 
@@ -13,6 +14,124 @@ import figutils
 import ss_timing_analysis.conf
 import ss_timing_analysis.group_data
 import ss_timing_analysis.group_fit
+
+
+def sim_scatter(save_pdf=False):
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    # load the fit parameters, excluding the bad subjects
+    # this will be subj x onsets x oris x (a,b) x (est, 2.5, 97.5)
+    (fit, _, _) = ss_timing_analysis.group_fit.load_fit_data(
+        exclude=True
+    )
+
+    # restrict to just the alpha estimates for the simultaneous condition
+    data = fit[:, 1, :, 0, 0]
+
+    # now convert to the suppression effect index; parallel - orthogonal
+    data = data[:, 1] - data[:, 0]
+
+    # righto, now for the sz scores
+    sz = np.array(
+        [
+            conf.demographics[subj_id]["olt"]
+            for subj_id in conf.subj_ids
+        ]
+    )
+
+    # check that we've exlcuded subjects, as we think we should have
+    assert len(sz) == len(data)
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    page = embed.Root.Add("page")
+    page.width.val = "18cm"
+    page.height.val = "8cm"
+
+    grid = page.Add("grid")
+    grid.rows.val = 1
+    grid.columns.val = 2
+
+    grid.leftMargin.val = grid.rightMargin.val = "0cm"
+    grid.bottomMargin.val = grid.topMargin.val = "0cm"
+
+    grid.scaleCols.val = [0.85, 0.15]
+
+    # SCATTER
+    graph = grid.Add("graph", autoadd=False)
+    graph.bottomMargin.val = "1cm"
+
+    x_axis = graph.Add("axis")
+    y_axis = graph.Add("axis")
+
+    xy = graph.Add("xy")
+
+    xy.xData.val = sz
+    xy.yData.val = data
+    xy.PlotLine.hide.val = True
+    xy.MarkerFill.transparency.val = 60
+    xy.MarkerLine.hide.val = True
+
+    x_axis.label.val = "Schizotypy score"
+    y_axis.label.val = "Context effect for simultaneous (par - orth)"
+    y_axis.max.val = 0.5
+
+
+    # KDE
+    graph = grid.Add("graph", autoadd=False)
+
+    graph.leftMargin.val = "0cm"
+    graph.bottomMargin.val = "1cm"
+
+    x_axis = graph.Add("axis")
+    y_axis = graph.Add("axis")
+
+    kde = scipy.stats.gaussian_kde(data)
+
+    kde_x = np.linspace(0, 0.5, 100)
+    kde_y = kde(kde_x)
+
+    xy = graph.Add("xy")
+
+    xy.xData.val = kde_y
+    xy.yData.val = kde_x
+    xy.MarkerFill.hide.val = True
+    xy.MarkerLine.hide.val = True
+    xy.FillBelow.fillto.val = "left"
+    xy.FillBelow.color.val = "grey"
+    xy.PlotLine.color.val = "grey"
+    xy.FillBelow.hide.val = False
+
+    y_axis.max.val = 0.5
+    x_axis.hide.val = True
+    x_axis.lowerPosition.val = 0.075
+
+    if not save_pdf:
+        embed.EnableToolbar(True)
+        embed.WaitForClose()
+
+    else:
+
+        pdf_path = os.path.join(
+            conf.figures_path,
+            "ss_timing_sim_scatter.pdf"
+        )
+
+        embed.Export(pdf_path)
+
+        log.info("Saving " + pdf_path + "...")
+
+        (stem, _) = os.path.splitext(pdf_path)
+
+        vsz_path = stem + ".vsz"
+
+        embed.Save(vsz_path)
+
+        log.info("Saving " + vsz_path + "...")
+
+        embed.WaitForClose()
 
 
 def thresholds(save_pdf=False):
@@ -301,7 +420,10 @@ def eg_subject(subj_id="p1022", save_pdf=False):
 
             y_axis.min.val = -0.1
             y_axis.max.val = 1.1
-            y_axis.label.val = "Accuracy (%)"
+            y_axis.label.val = "Accuracy (prop. correct)"
+            y_axis.MinorTicks.hide.val = True
+            y_axis.MajorTicks.manualTicks.val = [0, 0.25, 0.5, 0.67, 1]
+            y_axis.TickLabels.format.val = "%.02f"
 
     if not save_pdf:
         embed.EnableToolbar(True)
@@ -325,6 +447,8 @@ def eg_subject(subj_id="p1022", save_pdf=False):
         embed.Save(vsz_path)
 
         log.info("Saving " + vsz_path + "...")
+
+        embed.WaitForClose()
 
 
 def subjects(save_pdf=False):
@@ -418,7 +542,7 @@ def subjects(save_pdf=False):
                 )
 
                 point_scale = np.sqrt(
-                    (data[i_subj, i_onset, i_ori, :, 1] * 1) / np.pi
+                    data[i_subj, i_onset, i_ori, :, 1] / np.pi
                 ) * 2 * 0.35
 
                 embed.SetData(
