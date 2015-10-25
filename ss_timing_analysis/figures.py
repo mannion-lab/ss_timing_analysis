@@ -108,11 +108,7 @@ def sim_scatter(save_pdf=False):
     x_axis.hide.val = True
     x_axis.lowerPosition.val = 0.075
 
-    if not save_pdf:
-        embed.EnableToolbar(True)
-        embed.WaitForClose()
-
-    else:
+    if save_pdf:
 
         pdf_path = os.path.join(
             conf.figures_path,
@@ -131,7 +127,8 @@ def sim_scatter(save_pdf=False):
 
         log.info("Saving " + vsz_path + "...")
 
-        embed.WaitForClose()
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
 
 
 def thresholds(save_pdf=False):
@@ -235,11 +232,7 @@ def thresholds(save_pdf=False):
         cond_label.alignHorz.val = "centre"
         cond_label.Text.size.val = "10pt"
 
-    if not save_pdf:
-        embed.EnableToolbar(True)
-        embed.WaitForClose()
-
-    else:
+    if save_pdf:
 
         pdf_path = os.path.join(
             conf.figures_path,
@@ -258,7 +251,8 @@ def thresholds(save_pdf=False):
 
         log.info("Saving " + vsz_path + "...")
 
-        embed.WaitForClose()
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
 
 
 def eg_subject(subj_id="p1022", save_pdf=False):
@@ -425,11 +419,7 @@ def eg_subject(subj_id="p1022", save_pdf=False):
             y_axis.MajorTicks.manualTicks.val = [0, 0.25, 0.5, 0.67, 1]
             y_axis.TickLabels.format.val = "%.02f"
 
-    if not save_pdf:
-        embed.EnableToolbar(True)
-        embed.WaitForClose()
-
-    else:
+    if save_pdf:
 
         pdf_path = os.path.join(
             conf.figures_path,
@@ -448,7 +438,8 @@ def eg_subject(subj_id="p1022", save_pdf=False):
 
         log.info("Saving " + vsz_path + "...")
 
-        embed.WaitForClose()
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
 
 
 def subjects(save_pdf=False):
@@ -502,13 +493,16 @@ def subjects(save_pdf=False):
                 y_axis = graph.Add("axis")
 
                 cond_label = graph.Add("label")
-
-                cond_label.label.val = (
-                    "Onset: " + conf.surr_onsets[i_onset] + "; " +
-                    "Ori: " + conf.surr_ori_labels[i_ori]
+                cond_label.label.val = ", ".join(
+                    [
+                        conf.surr_ori_labels[i_ori],
+                        conf.surr_onset_labels[i_onset]
+                    ]
                 )
                 cond_label.yPos.val = 1.02
-                cond_label.xPos.val = 0.22
+                cond_label.xPos.val = 0.5
+                cond_label.alignHorz.val = "centre"
+                cond_label.Text.size.val = "10pt"
 
                 # CROSSHAIRS
                 pse_y = graph.Add("xy")
@@ -523,7 +517,6 @@ def subjects(save_pdf=False):
                     pse_ax.MarkerFill.hide.val = True
                     pse_ax.MarkerLine.hide.val = True
                     pse_ax.PlotLine.style.val = "dashed"
-
 
                 # POINTS
                 points = graph.Add("xy")
@@ -597,16 +590,14 @@ def subjects(save_pdf=False):
                 x_axis.TickLabels.format.val = "%.3g"
                 x_axis.MajorTicks.manualTicks.val = [0.001, 0.01, 0.1, 0.5, 1]
 
-                y_axis.min.val = -0.05
-                y_axis.max.val = 1.05
-                y_axis.label.val = "Accuracy (%)"
+                y_axis.min.val = -0.1
+                y_axis.max.val = 1.1
+                y_axis.label.val = "Accuracy (prop. correct)"
+                y_axis.MinorTicks.hide.val = True
+                y_axis.MajorTicks.manualTicks.val = [0, 0.25, 0.5, 0.67, 1]
+                y_axis.TickLabels.format.val = "%.02f"
 
-
-    if not save_pdf:
-        embed.EnableToolbar(True)
-        embed.WaitForClose()
-
-    else:
+    if save_pdf:
 
         pdf_path = os.path.join(
             conf.figures_path,
@@ -624,3 +615,7 @@ def subjects(save_pdf=False):
         embed.Save(vsz_path)
 
         log.info("Saving " + vsz_path + "...")
+
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
+
