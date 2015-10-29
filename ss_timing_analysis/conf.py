@@ -13,8 +13,6 @@ def get_conf(subj_id=""):
     conf = ss_timing.conf.get_conf(subj_id)
 
     conf.demographics_path = "/home/damien/venv_study/ss_timing/demographics"
-    conf.demographics_date = "20151019"
-
     conf.group_data_path = "/home/damien/venv_study/ss_timing/group_data"
     conf.figures_path = "/home/damien/venv_study/ss_timing/figures"
 
@@ -53,8 +51,6 @@ def get_conf(subj_id=""):
     conf.n_all_subj = len(conf.all_subj_ids)
     conf.n_subj = len(conf.subj_ids)
 
-    conf.demographics = demographics(conf)
-
     conf.log_bin_size = 0.03
 
     conf.log_bin_edges = np.arange(
@@ -76,117 +72,3 @@ def get_conf(subj_id=""):
     conf.boot_seed = 2118217324
 
     return conf
-
-
-def demographics(conf):
-
-    dem = {}
-
-    xls_path = os.path.join(
-        conf.demographics_path,
-        "sstimingspreadsheet_" + conf.demographics_date + ".xlsx"
-    )
-
-    wb = xlrd.open_workbook(xls_path).sheets()[0]
-
-    keys = [wb.cell(0, i_col).value for i_col in xrange(wb.ncols)]
-
-    for i_row in range(1, wb.nrows):
-
-        subj_id = (
-            "p{n:d}".format(
-                n=int(wb.cell(i_row, keys.index("Participant ID")).value)
-            )
-        )
-
-        dem[subj_id] = {
-            key: wb.cell(i_row, keys.index(key)).value
-            for key in keys
-            if key != "Participant ID"
-        }
-
-        dem[subj_id]["olt"] = (
-            dem[subj_id]["CogDis"] +
-            dem[subj_id]["ImpNon"] +
-            dem[subj_id]["IntAnh"] +
-            dem[subj_id]["UnEx"]
-        )
-
-    return dem
-
-
-def print_demographics(conf, exclude=True):
-
-    if exclude:
-        subj_ids = conf.subj_ids
-    else:
-        subj_ids = conf.all_subj_ids
-
-    n = len(subj_ids)
-
-    ###
-    print "Age:"
-
-    ages = [
-        int(conf.demographics[subj_id]["Age"])
-        for subj_id in subj_ids
-    ]
-
-    age_counts = collections.Counter(ages)
-
-    for (age, count) in age_counts.iteritems():
-        print "\t{a:d}: {c:d}/{n:d}".format(
-            a=age, c=count, n=n
-        )
-
-    ###
-    print "Gender:"
-
-    genders = [
-        conf.demographics[subj_id]["Gender"]
-        for subj_id in subj_ids
-    ]
-
-    gender_counts = collections.Counter(genders)
-
-    for (gender, count) in gender_counts.iteritems():
-        print "\t{g:s}: {c:d}/{n:d}".format(
-            g=gender, c=count, n=n
-        )
-
-    ###
-    print "Handedness:"
-
-    hands = [
-        conf.demographics[subj_id]["Handedness"]
-        for subj_id in subj_ids
-    ]
-
-    hand_counts = collections.Counter(hands)
-
-    for (hand, count) in hand_counts.iteritems():
-        print "\t{h:s}: {c:d}/{n:d}".format(
-            h=hand, c=count, n=n
-        )
-
-def print_olt_descriptives(conf, exclude=True):
-
-    if exclude:
-        subj_ids = conf.subj_ids
-    else:
-        subj_ids = conf.all_subj_ids
-
-    sz = [
-        conf.demographics[subj_id]["olt"]
-        for subj_id in subj_ids
-    ]
-
-    print "Mean: {m:.3f}".format(m=np.mean(sz))
-    print "Std: {s:.3f}".format(s=np.std(sz, ddof=1))
-    print "Min: {m:.3f}".format(m=np.min(sz))
-    print "Max: {m:.3f}".format(m=np.max(sz))
-
-
-
-
-
