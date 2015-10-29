@@ -11,6 +11,7 @@ log.addHandler(screen_handler)
 import ss_timing_analysis.group_data
 import ss_timing_analysis.group_fit
 import ss_timing_analysis.figures
+import ss_timing_analysis.dem
 
 
 def main():
@@ -27,6 +28,10 @@ def main():
 
     anas = [
         "group_data",
+        "group_data_2d",
+        "export_group_data_2d",
+        "export_dem",
+        "print_dem",
         "bin_group_data",
         "fit_data",
         "subjects_figure",
@@ -46,6 +51,19 @@ def main():
     if args.analysis == "group_data":
         ss_timing_analysis.group_data.save_group_data()
 
+    elif args.analysis == "group_data_2d":
+        ss_timing_analysis.group_data.save_group_data_2d()
+
+    elif args.analysis == "export_group_data_2d":
+        ss_timing_analysis.group_data.export_group_data_2d()
+
+    elif args.analysis == "export_dem":
+        ss_timing_analysis.dem.export_demographics()
+
+    elif args.analysis == "print_dem":
+        ss_timing_analysis.dem.print_demographics()
+        ss_timing_analysis.dem.print_olt_descriptives()
+
     elif args.analysis == "bin_group_data":
         ss_timing_analysis.group_data.bin_group_data()
 
@@ -63,4 +81,5 @@ def main():
 
     elif args.analysis == "sim_scatter":
         ss_timing_analysis.figures.sim_scatter(save_pdf=True)
+
 

@@ -1,9 +1,11 @@
 import os
+import csv
 
 import numpy as np
 
 import ss_timing_analysis.conf
 import ss_timing_analysis.data
+import ss_timing_analysis.dem
 
 
 def save_group_data():
@@ -154,6 +156,50 @@ def load_group_data_2d(exclude=False):
         data = np.insert(data, 1, new_i_subj, axis=1)
 
     return data
+
+
+def export_group_data_2d():
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    # trials x (subj, lin_subj, onset, ori, trial, contrast, resp)
+    data = load_group_data_2d(exclude=True)
+
+    csv_path = os.path.join(
+        conf.group_data_path,
+        "ss_timing_subj_resp_data_2d.csv"
+    )
+
+    dem = ss_timing_analysis.dem.demographics()
+
+    with open(csv_path, "wb") as csv_file:
+
+        writer = csv.writer(csv_file)
+
+        header = [
+            "i_subj_all",
+            "i_subj_curr",
+            "olife_total",
+            "i_onset",
+            "i_ori",
+            "i_trial",
+            "contrast",
+            "correct"
+        ]
+
+        writer.writerow(header)
+
+        for data_row in data:
+
+            subj_id = conf.all_subj_ids[data_row[0].astype("int")]
+            olife_total = dem[subj_id]["olife_total"]
+
+            row = [int(data_row[0]), int(data_row[1]), olife_total]
+            row.extend([int(data_item) for data_item in data_row[2:5]])
+            row.append(data_row[5])  # contrast, as float
+            row.append(int(data_row[6]))
+
+            writer.writerow(row)
 
 
 def bin_group_data():

@@ -7,7 +7,9 @@ import numpy as np
 import ss_timing_analysis.conf
 
 
-def export_demographics(conf):
+def export_demographics():
+
+    conf = ss_timing_analysis.conf.get_conf()
 
     dem = demographics(conf)
 
@@ -61,7 +63,9 @@ def export_demographics(conf):
             writer.writerow(row)
 
 
-def print_demographics(conf, exclude=True):
+def print_demographics(exclude=True):
+
+    conf = ss_timing_analysis.conf.get_conf()
 
     dem = demographics(conf)
 
@@ -118,7 +122,9 @@ def print_demographics(conf, exclude=True):
         )
 
 
-def print_olt_descriptives(conf, exclude=True):
+def print_olt_descriptives(exclude=True):
+
+    conf = ss_timing_analysis.conf.get_conf()
 
     dem = demographics(conf)
 
@@ -138,7 +144,9 @@ def print_olt_descriptives(conf, exclude=True):
     print "Max: {m:.3f}".format(m=np.max(sz))
 
 
-def demographics(conf):
+def demographics():
+
+    conf = ss_timing_analysis.conf.get_conf()
 
     raw_csv_path = os.path.join(
         conf.demographics_path,
