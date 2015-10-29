@@ -14,6 +14,7 @@ import figutils
 import ss_timing_analysis.conf
 import ss_timing_analysis.group_data
 import ss_timing_analysis.group_fit
+import ss_timing_analysis.dem
 
 
 def sim_scatter(save_pdf=False):
@@ -32,10 +33,12 @@ def sim_scatter(save_pdf=False):
     # now convert to the suppression effect index; parallel - orthogonal
     data = data[:, 1] - data[:, 0]
 
+    dem = ss_timing_analysis.dem.demographics()
+
     # righto, now for the sz scores
     sz = np.array(
         [
-            conf.demographics[subj_id]["olt"]
+            dem[subj_id]["olife_total"]
             for subj_id in conf.subj_ids
         ]
     )
