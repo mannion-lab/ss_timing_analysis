@@ -225,7 +225,7 @@ def thresholds(save_pdf=False):
         y_axis.MajorTicks.manualTicks.val = [0.001, 0.01, 0.1, 0.5, 1]
         y_axis.min.val = 0.005
         y_axis.max.val = 1.0
-        y_axis.label.val = "Threshold contrast (%)"
+        y_axis.label.val = "Threshold contrast"
 
         cond_label = graph.Add("label")
 

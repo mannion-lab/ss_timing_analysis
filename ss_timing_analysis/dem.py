@@ -7,6 +7,27 @@ import numpy as np
 import ss_timing_analysis.conf
 
 
+def get_olife_total(exclude=True):
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    dem = demographics()
+
+    if exclude:
+        subj_ids = conf.subj_ids
+    else:
+        subj_ids = conf.all_subj_ids
+
+    olife_total = np.array(
+        [
+            dem[subj_id]["olife_total"]
+            for subj_id in subj_ids
+        ]
+    )
+
+    return olife_total
+
+
 def export_demographics():
 
     conf = ss_timing_analysis.conf.get_conf()
