@@ -12,6 +12,7 @@ import ss_timing_analysis.group_data
 import ss_timing_analysis.group_fit
 import ss_timing_analysis.figures
 import ss_timing_analysis.dem
+import ss_timing_analysis.stats
 
 
 def main():
@@ -37,7 +38,9 @@ def main():
         "subjects_figure",
         "eg_subject_figure",
         "thresholds",
-        "sim_scatter"
+        "sim_scatter",
+        "stats",
+        "descriptives"
     ]
 
     parser.add_argument(
@@ -82,4 +85,9 @@ def main():
     elif args.analysis == "sim_scatter":
         ss_timing_analysis.figures.sim_scatter(save_pdf=True)
 
+    elif args.analysis == "stats":
+        ss_timing_analysis.stats.correlations()
+
+    elif args.analysis == "descriptives":
+        ss_timing_analysis.stats.descriptives()
 
