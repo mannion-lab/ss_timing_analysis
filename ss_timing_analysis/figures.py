@@ -17,7 +17,7 @@ import ss_timing_analysis.group_fit
 import ss_timing_analysis.dem
 
 
-def sim_scatter(save_pdf=False):
+def scatter(save_pdf=False, cond="sim"):
 
     conf = ss_timing_analysis.conf.get_conf()
 
@@ -27,11 +27,15 @@ def sim_scatter(save_pdf=False):
         exclude=True
     )
 
-    # restrict to just the alpha estimates for the simultaneous condition
-    data = fit[:, 1, :, 0, 0]
+    # restrict to just the alpha estimates
+    data = fit[..., 0, 0]
 
-    # now convert to the suppression effect index; parallel - orthogonal
-    data = data[:, 1] - data[:, 0]
+    if cond == "sim":
+        data = data[:, 1, 1] - data[:, 1, 0]
+    elif cond == "sim_orth":
+        data = data[:, 1, 0]
+    elif cond == "lead":
+        data = data[:, 0, 1] - data[:, 0, 0]
 
     dem = ss_timing_analysis.dem.demographics()
 
@@ -60,7 +64,7 @@ def sim_scatter(save_pdf=False):
     grid.leftMargin.val = grid.rightMargin.val = "0cm"
     grid.bottomMargin.val = grid.topMargin.val = "0cm"
 
-    grid.scaleCols.val = [0.85, 0.15]
+    grid.scaleCols.val = [0.85, 0.17]
 
     # SCATTER
     graph = grid.Add("graph", autoadd=False)
@@ -78,9 +82,21 @@ def sim_scatter(save_pdf=False):
     xy.MarkerLine.hide.val = True
 
     x_axis.label.val = "Schizotypy score"
-    y_axis.label.val = "Context effect for simultaneous (par - orth)"
-    y_axis.max.val = 0.5
 
+    if cond == "sim":
+        y_axis.label.val = "Context effect for simultaneous (par - orth)"
+        y_max = 0.5
+    elif cond == "sim_orth":
+        y_axis.label.val = "Contrast detection threshold for simultaneous, orth"
+        y_max = 0.03
+        y_axis.TickLabels.format.val = "%.3g"
+
+    elif cond == "lead":
+        y_axis.label.val = "Context effect for leading surround (par - orth)"
+        y_max = 0.085
+
+    y_axis.max.val = y_max
+    y_axis.min.val = 0.0
 
     # KDE
     graph = grid.Add("graph", autoadd=False)
@@ -93,7 +109,7 @@ def sim_scatter(save_pdf=False):
 
     kde = scipy.stats.gaussian_kde(data)
 
-    kde_x = np.linspace(0, 0.5, 100)
+    kde_x = np.linspace(0, y_max, 100)
     kde_y = kde(kde_x)
 
     xy = graph.Add("xy")
@@ -107,7 +123,7 @@ def sim_scatter(save_pdf=False):
     xy.PlotLine.color.val = "grey"
     xy.FillBelow.hide.val = False
 
-    y_axis.max.val = 0.5
+    y_axis.max.val = y_max
     x_axis.hide.val = True
     x_axis.lowerPosition.val = 0.075
 
@@ -115,7 +131,7 @@ def sim_scatter(save_pdf=False):
 
         pdf_path = os.path.join(
             conf.figures_path,
-            "ss_timing_sim_scatter.pdf"
+            "ss_timing_{c:s}_scatter.pdf".format(c=cond)
         )
 
         embed.Export(pdf_path)
@@ -133,6 +149,96 @@ def sim_scatter(save_pdf=False):
     embed.EnableToolbar(True)
     embed.WaitForClose()
 
+
+def context_by_gender(save_pdf=False):
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    dem = ss_timing_analysis.dem.demographics()
+
+    genders = np.array(
+        [dem[subj_id]["gender"] for subj_id in conf.subj_ids]
+    )
+
+    # load the fit parameters, excluding the bad subjects
+    # this will be subj x onsets x oris x (a,b) x (est, 2.5, 97.5)
+    (fit, _, _) = ss_timing_analysis.group_fit.load_fit_data(
+        exclude=True
+    )
+
+    # restrict to just the alpha estimates
+    data = fit[..., 0, 0]
+
+    # and look at the context effect for simultaneous
+    data = data[:, 1, 1] - data[:, 1, 0]
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    page = embed.Root.Add("page")
+    page.width.val = "12cm"
+    page.height.val = "8cm"
+
+    graph = page.Add("graph", autoadd=False)
+    graph.bottomMargin.val = "1cm"
+    graph.topMargin.val = "0.6cm"
+
+    x_axis = graph.Add("axis")
+    y_axis = graph.Add("axis")
+
+    for (i_gender, gender) in enumerate(["F", "M"]):
+
+        curr_gender = data[genders == gender]
+
+        boxplot = graph.Add("boxplot")
+
+        dataset_str = "data_{b:d}".format(b=i_gender)
+
+        embed.SetData(
+            dataset_str,
+            curr_gender
+        )
+
+        boxplot.values.val = dataset_str
+        boxplot.posn.val = i_gender
+        boxplot.labels.val = "{g:s} (n={n:d})".format(
+            g=gender,
+            n=len(curr_gender)
+        )
+        boxplot.fillfraction.val = 0.3
+        boxplot.markerSize.val = "2pt"
+
+        x_axis.mode.val = "labels"
+        x_axis.MajorTicks.manualTicks.val = [0, 1]
+        x_axis.MinorTicks.hide.val = True
+        x_axis.label.val = "Gender"
+
+        y_axis.TickLabels.format.val = "%.3g"
+        y_axis.min.val = 0.0
+        y_axis.max.val = 0.5
+        y_axis.label.val = "Context effect for simultaneous (par - orth)"
+
+    if save_pdf:
+
+        pdf_path = os.path.join(
+            conf.figures_path,
+            "ss_timing_context_by_gender.pdf"
+        )
+
+        embed.Export(pdf_path)
+
+        log.info("Saving " + pdf_path + "...")
+
+        (stem, _) = os.path.splitext(pdf_path)
+
+        vsz_path = stem + ".vsz"
+
+        embed.Save(vsz_path)
+
+        log.info("Saving " + vsz_path + "...")
+
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
 
 def context_by_booth(save_pdf=False):
 
@@ -326,7 +432,7 @@ def thresholds(save_pdf=False):
         cond_label.yPos.val = 1.02
         cond_label.xPos.val = 0.5
         cond_label.alignHorz.val = "centre"
-        cond_label.Text.size.val = "10pt"
+        cond_label.Text.size.val = "8pt"
 
     if save_pdf:
 
@@ -419,7 +525,7 @@ def eg_subject(subj_id="p1022", save_pdf=False):
             cond_label.yPos.val = 1.02
             cond_label.xPos.val = 0.5
             cond_label.alignHorz.val = "centre"
-            cond_label.Text.size.val = "10pt"
+            cond_label.Text.size.val = "8pt"
 
             # CROSSHAIRS
             pse_y = graph.Add("xy")
@@ -598,7 +704,7 @@ def subjects(save_pdf=False):
                 cond_label.yPos.val = 1.02
                 cond_label.xPos.val = 0.5
                 cond_label.alignHorz.val = "centre"
-                cond_label.Text.size.val = "10pt"
+                cond_label.Text.size.val = "8pt"
 
                 # CROSSHAIRS
                 pse_y = graph.Add("xy")
