@@ -39,7 +39,10 @@ def main():
         "eg_subject_figure",
         "thresholds",
         "sim_scatter",
+        "sim_orth_scatter",
+        "lead_scatter",
         "context_by_booth",
+        "context_by_gender",
         "stats",
         "descriptives"
     ]
@@ -84,10 +87,19 @@ def main():
         ss_timing_analysis.figures.thresholds(save_pdf=True)
 
     elif args.analysis == "sim_scatter":
-        ss_timing_analysis.figures.sim_scatter(save_pdf=True)
+        ss_timing_analysis.figures.scatter(save_pdf=True, cond="sim")
+
+    elif args.analysis == "sim_orth_scatter":
+        ss_timing_analysis.figures.scatter(save_pdf=True, cond="sim_orth")
+
+    elif args.analysis == "lead_scatter":
+        ss_timing_analysis.figures.scatter(save_pdf=True, cond="lead")
 
     elif args.analysis == "context_by_booth":
         ss_timing_analysis.figures.context_by_booth(save_pdf=True)
+
+    elif args.analysis == "context_by_gender":
+        ss_timing_analysis.figures.context_by_gender(save_pdf=True)
 
     elif args.analysis == "stats":
         ss_timing_analysis.stats.correlations()
