@@ -39,6 +39,7 @@ def main():
         "eg_subject_figure",
         "thresholds",
         "sim_scatter",
+        "context_by_booth",
         "stats",
         "descriptives"
     ]
@@ -84,6 +85,9 @@ def main():
 
     elif args.analysis == "sim_scatter":
         ss_timing_analysis.figures.sim_scatter(save_pdf=True)
+
+    elif args.analysis == "context_by_booth":
+        ss_timing_analysis.figures.context_by_booth(save_pdf=True)
 
     elif args.analysis == "stats":
         ss_timing_analysis.stats.correlations()

@@ -134,6 +134,99 @@ def sim_scatter(save_pdf=False):
     embed.WaitForClose()
 
 
+def context_by_booth(save_pdf=False):
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    dem = ss_timing_analysis.dem.demographics()
+
+    booths = np.array(
+        [dem[subj_id]["testing_booth"] for subj_id in conf.subj_ids]
+    )
+
+    potential_booths = np.unique(booths)
+
+    n_booths = len(potential_booths)
+    assert n_booths == 2
+
+    # load the fit parameters, excluding the bad subjects
+    # this will be subj x onsets x oris x (a,b) x (est, 2.5, 97.5)
+    (fit, _, _) = ss_timing_analysis.group_fit.load_fit_data(
+        exclude=True
+    )
+
+    # restrict to just the alpha estimates
+    data = fit[..., 0, 0]
+
+    # and look at the context effect for simultaneous
+    data = data[:, 1, 1] - data[:, 1, 0]
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    page = embed.Root.Add("page")
+    page.width.val = "12cm"
+    page.height.val = "8cm"
+
+    graph = page.Add("graph", autoadd=False)
+    graph.bottomMargin.val = "1cm"
+    graph.topMargin.val = "0.6cm"
+
+    x_axis = graph.Add("axis")
+    y_axis = graph.Add("axis")
+
+    for i_booth in xrange(n_booths):
+
+        curr_booth = data[booths == potential_booths[i_booth]]
+
+        boxplot = graph.Add("boxplot")
+
+        dataset_str = "data_{b:d}".format(b=i_booth)
+
+        embed.SetData(
+            dataset_str,
+            curr_booth
+        )
+
+        boxplot.values.val = dataset_str
+        boxplot.posn.val = i_booth
+        boxplot.labels.val = str(i_booth + 1)
+        boxplot.fillfraction.val = 0.3
+        boxplot.markerSize.val = "2pt"
+
+        x_axis.mode.val = "labels"
+        x_axis.MajorTicks.manualTicks.val = [0, 1]
+        x_axis.MinorTicks.hide.val = True
+        x_axis.label.val = "Testing booth"
+
+        y_axis.TickLabels.format.val = "%.3g"
+        y_axis.min.val = 0.0
+        y_axis.max.val = 0.5
+        y_axis.label.val = "Context effect for simultaneous (par - orth)"
+
+    if save_pdf:
+
+        pdf_path = os.path.join(
+            conf.figures_path,
+            "ss_timing_context_by_booth.pdf"
+        )
+
+        embed.Export(pdf_path)
+
+        log.info("Saving " + pdf_path + "...")
+
+        (stem, _) = os.path.splitext(pdf_path)
+
+        vsz_path = stem + ".vsz"
+
+        embed.Save(vsz_path)
+
+        log.info("Saving " + vsz_path + "...")
+
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
+
+
 def thresholds(save_pdf=False):
 
     conf = ss_timing_analysis.conf.get_conf()
