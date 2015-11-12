@@ -28,6 +28,27 @@ def get_olife_total(exclude=True):
     return olife_total
 
 
+def get_olife_subscale(subscale, exclude=True):
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    dem = demographics()
+
+    if exclude:
+        subj_ids = conf.subj_ids
+    else:
+        subj_ids = conf.all_subj_ids
+
+    olife_subscale = np.array(
+        [
+            dem[subj_id][subscale]["score"]
+            for subj_id in subj_ids
+        ]
+    )
+
+    return olife_subscale
+
+
 def export_demographics():
 
     conf = ss_timing_analysis.conf.get_conf()

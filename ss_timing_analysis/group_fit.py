@@ -199,11 +199,3 @@ def group_fit_exclusions():
     bad_ids.sort()
 
     return bad_ids
-
-
-
-
-
-
-
-

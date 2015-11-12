@@ -296,7 +296,10 @@ def context_by_booth(save_pdf=False):
 
         boxplot.values.val = dataset_str
         boxplot.posn.val = i_booth
-        boxplot.labels.val = str(i_booth + 1)
+        boxplot.labels.val = "{b:d} (n={n:d})".format(
+            b=i_booth + 1,
+            n=len(curr_booth)
+        )
         boxplot.fillfraction.val = 0.3
         boxplot.markerSize.val = "2pt"
 
@@ -665,13 +668,13 @@ def subjects(save_pdf=False):
 
         page = embed.Root.Add("page")
 
-        page.width.val = "15cm"
-        page.height.val = "15cm"
+        page.width.val = "21cm"
+        page.height.val = "29.7cm"
 
         label = page.Add("label")
 
         label.label.val = subj_id
-        label.yPos.val = 0.95
+        label.yPos.val = 0.77
 
         if subj_id in conf.exclude_ids:
             label.label.val += " (excluded)"
@@ -682,9 +685,9 @@ def subjects(save_pdf=False):
         grid.rows.val = 2
         grid.columns.val = 2
 
-        grid.leftMargin.val = grid.rightMargin.val = "0cm"
-        grid.topMargin.val = "1.2cm"
-        grid.bottomMargin.val = "0cm"
+        grid.leftMargin.val = grid.rightMargin.val = "3cm"
+        grid.topMargin.val = "8cm"
+        grid.bottomMargin.val = "8cm"
 
         for i_onset in xrange(conf.n_surr_onsets):
             for i_ori in xrange(conf.n_surr_oris):
