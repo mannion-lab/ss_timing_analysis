@@ -150,6 +150,308 @@ def scatter(save_pdf=False, cond="sim"):
     embed.WaitForClose()
 
 
+def scatter_sub(save_pdf=False):
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    # load the fit parameters, excluding the bad subjects
+    # this will be subj x onsets x oris x (a,b) x (est, 2.5, 97.5)
+    (fit, _, _) = ss_timing_analysis.group_fit.load_fit_data(
+        exclude=True
+    )
+
+    # restrict to just the alpha estimates
+    data = fit[..., 0, 0]
+
+    data = data[:, 1, 1] - data[:, 1, 0]
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    page = embed.Root.Add("page")
+
+    page.width.val = "18cm"
+    page.height.val = "15cm"
+
+    grid = page.Add("grid")
+
+    grid.rows.val = 2
+    grid.columns.val = 2
+
+    grid.leftMargin.val = grid.rightMargin.val = "0cm"
+    grid.topMargin.val = "0cm"
+    grid.bottomMargin.val = "0.1cm"
+
+    ss_nice = [
+        "Unusual experiences",
+        "Cognitive disorganisation",
+        "Introvertive anhedonia",
+        "Impulsive nonconformity"
+    ]
+
+    for (i_sub, subscale) in enumerate(
+        ("un_ex", "cog_dis", "int_anh", "imp_non")
+    ):
+
+        curr_ss = ss_timing_analysis.dem.get_olife_subscale(
+            subscale,
+            exclude=True
+        )
+
+        assert len(curr_ss) == len(data)
+
+        graph = grid.Add("graph", autoadd=False)
+        graph.bottomMargin.val = "1cm"
+        graph.topMargin.val = "0.6cm"
+
+        label = graph.Add("label")
+
+        label.label.val = ss_nice[i_sub]
+        label.yPos.val = 1.01
+        label.xPos.val = 0.5
+        label.alignHorz.val = "centre"
+
+        x_axis = graph.Add("axis")
+        y_axis = graph.Add("axis")
+
+        xy = graph.Add("xy")
+
+        xy.xData.val = curr_ss
+        xy.yData.val = data
+        xy.PlotLine.hide.val = True
+        xy.MarkerFill.transparency.val = 60
+        xy.MarkerLine.hide.val = True
+
+        x_axis.label.val = "Score"
+
+        y_axis.label.val = "Context effect for simultaneous (par - orth)"
+        y_max = 0.5
+
+        y_axis.max.val = y_max
+        y_axis.min.val = 0.0
+
+        x_axis.min.val = -2
+
+
+    if save_pdf:
+
+        pdf_path = os.path.join(
+            conf.figures_path,
+            "ss_timing_scatter_sub.pdf"
+        )
+
+        embed.Export(pdf_path)
+
+        log.info("Saving " + pdf_path + "...")
+
+        (stem, _) = os.path.splitext(pdf_path)
+
+        vsz_path = stem + ".vsz"
+
+        embed.Save(vsz_path)
+
+        log.info("Saving " + vsz_path + "...")
+
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
+
+def norms_comparison(save_pdf=False):
+
+    norms = {
+        "un_ex": {
+            "F": {
+                0.25: 4,
+                0.5: 9,
+                0.75: 15,
+                0.9: 19.2
+            },
+            "M": {
+                0.25: 4,
+                0.5: 9,
+                0.75: 15,
+                0.9: 19
+            }
+        },
+        "cog_dis": {
+            "F": {
+                0.25: 8,
+                0.5: 13,
+                0.75: 17,
+                0.9: 21
+            },
+            "M": {
+                0.25: 8,
+                0.5: 12,
+                0.75: 16,
+                0.9: 20
+            }
+        },
+        "int_anh": {
+            "F": {
+                0.25: 2,
+                0.5: 4,
+                0.75: 7,
+                0.9: 10
+            },
+            "M": {
+                0.25: 2,
+                0.5: 5,
+                0.75: 8,
+                0.9: 11
+            }
+        },
+        "imp_non": {
+            "F": {
+                0.25: 6,
+                0.5: 9,
+                0.75: 12,
+                0.9: 14
+            },
+            "M": {
+                0.25: 6,
+                0.5: 10,
+                0.75: 13,
+                0.9: 15
+            }
+        }
+    }
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    dem = ss_timing_analysis.dem.demographics()
+
+    genders = np.array(
+        [dem[subj_id]["gender"] for subj_id in conf.subj_ids]
+    )
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    page = embed.Root.Add("page")
+
+    page.width.val = "18cm"
+    page.height.val = "15cm"
+
+    grid = page.Add("grid")
+
+    grid.rows.val = 2
+    grid.columns.val = 2
+
+    grid.leftMargin.val = grid.rightMargin.val = "0cm"
+    grid.topMargin.val = "0cm"
+    grid.bottomMargin.val = "0.1cm"
+
+    y_max = [20, 22, 15, 17]
+
+    ss_nice = [
+        "Unusual experiences",
+        "Cognitive disorganisation",
+        "Introvertive anhedonia",
+        "Impulsive nonconformity"
+    ]
+
+    for (i_sub, subscale) in enumerate(
+        ("un_ex", "cog_dis", "int_anh", "imp_non")
+    ):
+
+        curr_ss = ss_timing_analysis.dem.get_olife_subscale(
+            subscale,
+            exclude=True
+        )
+
+        graph = grid.Add("graph", autoadd=False)
+        graph.bottomMargin.val = "1cm"
+        graph.topMargin.val = "0.6cm"
+
+        label = graph.Add("label")
+
+        label.label.val = ss_nice[i_sub]
+        label.yPos.val = 1.01
+        label.xPos.val = 0.5
+        label.alignHorz.val = "centre"
+
+        x_axis = graph.Add("axis")
+        y_axis = graph.Add("axis")
+
+        for (i_gender, gender) in enumerate(["F", "M"]):
+
+            # first, the norms
+            boxplot = graph.Add("boxplot")
+
+            boxplot.calculate.val = False
+            boxplot.median.val = norms[subscale][gender][0.5]
+            boxplot.boxmin.val = norms[subscale][gender][0.25]
+            boxplot.boxmax.val = norms[subscale][gender][0.75]
+            boxplot.whiskermax.val = norms[subscale][gender][0.9]
+            boxplot.whiskermin.val = norms[subscale][gender][0.25]
+            boxplot.mean.val = norms[subscale][gender][0.5]
+
+            boxplot.posn.val = i_gender - 0.15
+
+            boxplot.fillfraction.val = 0.15
+            boxplot.markerSize.val = "2pt"
+
+            boxplot.labels.val = "Norm\\\\({g:s})".format(g=gender)
+            boxplot.meanmarker.val = "none"
+
+            curr_gender = curr_ss[genders == gender]
+
+            (b25, b50, b75, b90) = scipy.stats.scoreatpercentile(
+                curr_gender,
+                [25, 50, 75, 90]
+            )
+
+            boxplot = graph.Add("boxplot")
+
+            boxplot.calculate.val = False
+            boxplot.median.val = b50
+            boxplot.boxmin.val = b25
+            boxplot.boxmax.val = b75
+            boxplot.whiskermax.val = b90
+            boxplot.whiskermin.val = b25
+            boxplot.mean.val = b50
+
+            boxplot.posn.val = i_gender + 0.15
+
+            boxplot.fillfraction.val = 0.15
+            boxplot.markerSize.val = "2pt"
+
+            boxplot.labels.val = "Curr\\\\({g:s})".format(g=gender)
+
+            boxplot.meanmarker.val = "none"
+
+        y_axis.min.val = 0.0
+        y_axis.max.val = y_max[i_sub]
+        y_axis.MajorTicks.manualTicks.val = range(0, y_max[i_sub] + 1, 5)
+
+        x_axis.mode.val = "labels"
+        x_axis.MajorTicks.manualTicks.val = [-0.15, 0.15, 0.85, 1.15]
+        x_axis.MinorTicks.hide.val = True
+        x_axis.label.val = "Source and gender"
+
+    if save_pdf:
+
+        pdf_path = os.path.join(
+            conf.figures_path,
+            "ss_timing_norms_comparison.pdf"
+        )
+
+        embed.Export(pdf_path)
+
+        log.info("Saving " + pdf_path + "...")
+
+        (stem, _) = os.path.splitext(pdf_path)
+
+        vsz_path = stem + ".vsz"
+
+        embed.Save(vsz_path)
+
+        log.info("Saving " + vsz_path + "...")
+
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
+
+
 def context_by_gender(save_pdf=False):
 
     conf = ss_timing_analysis.conf.get_conf()
