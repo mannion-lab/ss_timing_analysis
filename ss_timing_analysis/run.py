@@ -43,6 +43,8 @@ def main():
         "lead_scatter",
         "context_by_booth",
         "context_by_gender",
+        "norms_comparison",
+        "sim_scatter_subscales",
         "stats",
         "descriptives"
     ]
@@ -100,6 +102,12 @@ def main():
 
     elif args.analysis == "context_by_gender":
         ss_timing_analysis.figures.context_by_gender(save_pdf=True)
+
+    elif args.analysis == "norms_comparison":
+        ss_timing_analysis.figures.norms_comparison(save_pdf=True)
+
+    elif args.analysis == "sim_scatter_subscales":
+        ss_timing_analysis.figures.scatter_sub(save_pdf=True)
 
     elif args.analysis == "stats":
         ss_timing_analysis.stats.correlations()
