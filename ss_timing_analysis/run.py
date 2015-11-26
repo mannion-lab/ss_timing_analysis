@@ -39,8 +39,11 @@ def main():
         "eg_subject_figure",
         "thresholds",
         "sim_scatter",
+        "sim_scatter_rank",
         "sim_orth_scatter",
+        "sim_orth_scatter_rank",
         "lead_scatter",
+        "lead_scatter_rank",
         "context_by_booth",
         "context_by_gender",
         "norms_comparison",
@@ -89,13 +92,46 @@ def main():
         ss_timing_analysis.figures.thresholds(save_pdf=True)
 
     elif args.analysis == "sim_scatter":
-        ss_timing_analysis.figures.scatter(save_pdf=True, cond="sim")
+        ss_timing_analysis.figures.scatter(
+            save_pdf=True,
+            cond="sim",
+            form="linear"
+        )
+
+    elif args.analysis == "sim_scatter_rank":
+        ss_timing_analysis.figures.scatter(
+            save_pdf=True,
+            cond="sim",
+            form="rank"
+        )
 
     elif args.analysis == "sim_orth_scatter":
-        ss_timing_analysis.figures.scatter(save_pdf=True, cond="sim_orth")
+        ss_timing_analysis.figures.scatter(
+            save_pdf=True,
+            cond="sim_orth",
+            form="linear"
+        )
+
+    elif args.analysis == "sim_orth_scatter_rank":
+        ss_timing_analysis.figures.scatter(
+            save_pdf=True,
+            cond="sim_orth",
+            form="rank"
+        )
 
     elif args.analysis == "lead_scatter":
-        ss_timing_analysis.figures.scatter(save_pdf=True, cond="lead")
+        ss_timing_analysis.figures.scatter(
+            save_pdf=True,
+            cond="lead",
+            form="linear"
+        )
+
+    elif args.analysis == "lead_scatter_rank":
+        ss_timing_analysis.figures.scatter(
+            save_pdf=True,
+            cond="lead",
+            form="rank"
+        )
 
     elif args.analysis == "context_by_booth":
         ss_timing_analysis.figures.context_by_booth(save_pdf=True)
