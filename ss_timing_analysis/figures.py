@@ -17,7 +17,171 @@ import ss_timing_analysis.group_fit
 import ss_timing_analysis.dem
 
 
-def scatter(save_pdf=False, cond="sim"):
+def scatter(cond, form, save_pdf=False):
+
+    if cond not in ["sim", "sim_orth", "lead"]:
+        raise ValueError()
+
+    if form not in ["linear", "rank"]:
+        raise ValueError()
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    # load the fit parameters, excluding the bad subjects
+    # this will be subj x onsets x oris x (a,b) x (est, 2.5, 97.5)
+    (fit, _, _) = ss_timing_analysis.group_fit.load_fit_data(exclude=True)
+
+    # restrict to just the alpha estimates
+    data = fit[..., 0, 0]
+
+    if cond == "sim":
+        data = data[:, 1, 1] - data[:, 1, 0]
+    elif cond == "sim_orth":
+        data = data[:, 1, 0]
+    elif cond == "lead":
+        data = data[:, 0, 1] - data[:, 0, 0]
+
+    if form == "rank":
+        data = scipy.stats.rankdata(data)
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    embed.SetData("data", data)
+
+    page = embed.Root.Add("page")
+
+    page.width.val = "8cm"
+    page.height.val = "20cm"
+
+    grid = page.Add("grid")
+
+    grid.rows.val = 4
+    grid.columns.val = 1
+
+    grid.leftMargin.val = grid.rightMargin.val = "0cm"
+    grid.topMargin.val = grid.bottomMargin.val = "0cm"
+
+    ss_nice = [
+        "Unusual experiences",
+        "Cognitive disorganisation",
+        "Introvertive anhedonia",
+        "Impulsive nonconformity"
+    ]
+
+    for (i_sub, subscale) in enumerate(
+        ("un_ex", "cog_dis", "int_anh", "imp_non")
+    ):
+
+        curr_ss = ss_timing_analysis.dem.get_olife_subscale(
+            subscale,
+            exclude=True
+        )
+
+        if form == "rank":
+            curr_ss = scipy.stats.rankdata(curr_ss)
+
+        assert len(curr_ss) == len(data)
+
+        graph = grid.Add("graph", autoadd=False)
+        graph.bottomMargin.val = "1cm"
+        graph.topMargin.val = "0.6cm"
+        graph.leftMargin.val = "1cm"
+
+        label = graph.Add("label")
+
+        label.label.val = ss_nice[i_sub]
+        label.yPos.val = 1.025
+        label.xPos.val = 0.5
+        label.alignHorz.val = "centre"
+
+        x_axis = graph.Add("axis")
+        y_axis = graph.Add("axis")
+
+        xy = graph.Add("xy")
+
+        xy.xData.val = curr_ss
+        xy.yData.val = data
+        xy.PlotLine.hide.val = True
+        xy.MarkerFill.transparency.val = 60
+        xy.MarkerLine.hide.val = True
+        xy.markerSize.val = "3pt"
+
+        if form == "rank":
+            x_axis.label.val = "O-LIFE subscale rank (1 = lowest)"
+        else:
+            x_axis.label.val = "O-LIFE subscale score"
+
+        if cond == "sim":
+            if form == "rank":
+                y_axis.label.val = "Context effect (rank; 1 = lowest)"
+            else:
+                y_axis.label.val = "Context effect (contrast units)"
+
+        elif cond == "sim_orth":
+            if form == "rank":
+                y_axis.label.val = "Orthogonal threshold (rank; 1 = lowest)"
+            else:
+                y_axis.label.val = "Orthogonal threshold (contrast units)"
+
+        elif cond == "lead":
+            if form == "rank":
+                y_axis.label.val = "Leading context effect (rank; 1 = lowest)"
+            else:
+                y_axis.label.val = "Leading context effect (contrast units)"
+
+        if form == "linear":
+            if cond == "sim":
+                y_max = 0.5
+            elif cond == "sim_orth":
+                y_max = 0.03
+                y_axis.TickLabels.format.val = "%.3g"
+            elif cond == "lead":
+                y_max = 0.085
+
+            y_axis.max.val = y_max
+            y_axis.min.val = 0.0
+
+            x_axis.min.val = -2
+
+        else:
+            x_axis.min.val = -10
+            x_axis.max.val = 105
+
+            y_axis.min.val = -10
+            y_axis.max.val = 105
+
+            x_axis.MajorTicks.manualTicks.val = [1] + range(10, 83, 10) + [93]
+            x_axis.MinorTicks.hide.val = True
+
+            y_axis.MajorTicks.manualTicks.val = [1] + range(10, 83, 10) + [93]
+            y_axis.MinorTicks.hide.val = True
+
+    if save_pdf:
+
+        pdf_path = os.path.join(
+            conf.figures_path,
+            "ss_timing_{c:s}_{f:s}_scatter.pdf".format(c=cond, f=form)
+        )
+
+        embed.Export(pdf_path)
+
+        log.info("Saving " + pdf_path + "...")
+
+        (stem, _) = os.path.splitext(pdf_path)
+
+        vsz_path = stem + ".vsz"
+
+        embed.Save(vsz_path)
+
+        log.info("Saving " + vsz_path + "...")
+
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
+
+
+
+def old_scatter(save_pdf=False, cond="sim"):
 
     conf = ss_timing_analysis.conf.get_conf()
 
