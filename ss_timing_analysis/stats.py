@@ -9,7 +9,7 @@ import ss_timing_analysis.dem
 
 def correlations():
 
-    corr_func = scipy.stats.pearsonr
+    corr_func = scipy.stats.spearmanr
 
     conf = ss_timing_analysis.conf.get_conf()
 
@@ -33,7 +33,7 @@ def correlations():
     (r, p) = corr_func(olife_total, sim_ss)
 
     print "\tr({n:d}) = {r:.4f}, p = {p:.4f}".format(
-        n=len(olife_total) - 1, r=r, p=p
+        n=len(olife_total) - 2, r=r, p=p
     )
 
     #--------
@@ -48,9 +48,10 @@ def correlations():
         (r, p) = corr_func(sub_total, sim_ss)
 
         print "\tr({n:d}) = {r:.4f}, p = {p:.4f}".format(
-            n=len(sub_total) - 1, r=r, p=p
+            n=len(sub_total) - 2, r=r, p=p
         )
 
+    print "-" * 10
 
     #--------
     # 2. simultaneous, orth x olife
@@ -63,8 +64,25 @@ def correlations():
     (r, p) = corr_func(olife_total, sim_orth)
 
     print "\tr({n:d}) = {r:.4f}, p = {p:.4f}".format(
-        n=len(olife_total) - 1, r=r, p=p
+        n=len(olife_total) - 2, r=r, p=p
     )
+
+    #--------
+    # 2a. subscale
+
+    for subscale in ["int_anh", "imp_non", "cog_dis", "un_ex"]:
+
+        sub_total = ss_timing_analysis.dem.get_olife_subscale(subscale)
+
+        print "Simultaneous, orth x O-LIFE {s:s}:".format(s=subscale)
+
+        (r, p) = corr_func(sub_total, sim_orth)
+
+        print "\tr({n:d}) = {r:.4f}, p = {p:.4f}".format(
+            n=len(sub_total) - 2, r=r, p=p
+        )
+
+    print "-" * 10
 
     #---------
     # 3. (sim, SS) - (delay, SS) x olife
@@ -75,8 +93,24 @@ def correlations():
     (r, p) = corr_func(olife_total, ss_diff)
 
     print "\tr({n:d}) = {r:.4f}, p = {p:.4f}".format(
-        n=len(olife_total) - 1, r=r, p=p
+        n=len(olife_total) - 2, r=r, p=p
     )
+
+    #--------
+    # 3a. subscale
+
+    for subscale in ["int_anh", "imp_non", "cog_dis", "un_ex"]:
+
+        sub_total = ss_timing_analysis.dem.get_olife_subscale(subscale)
+
+        print "(SS @ sim) - (SS @ delay) x O-LIFE {s:s}:".format(s=subscale)
+
+        (r, p) = corr_func(sub_total, ss_diff)
+
+        print "\tr({n:d}) = {r:.4f}, p = {p:.4f}".format(
+            n=len(sub_total) - 2, r=r, p=p
+        )
+
 
 
 def descriptives():

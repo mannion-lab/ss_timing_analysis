@@ -51,15 +51,15 @@ def scatter(cond, form, save_pdf=False):
 
     page = embed.Root.Add("page")
 
-    page.width.val = "8cm"
-    page.height.val = "20cm"
+    page.width.val = "14cm"
+    page.height.val = "10cm"
 
     grid = page.Add("grid")
 
-    grid.rows.val = 4
-    grid.columns.val = 1
+    grid.rows.val = 2
+    grid.columns.val = 2
 
-    grid.leftMargin.val = grid.rightMargin.val = "0cm"
+    grid.leftMargin.val = grid.rightMargin.val = "2cm"
     grid.topMargin.val = grid.bottomMargin.val = "0cm"
 
     ss_nice = [
@@ -87,6 +87,7 @@ def scatter(cond, form, save_pdf=False):
         graph.bottomMargin.val = "1cm"
         graph.topMargin.val = "0.6cm"
         graph.leftMargin.val = "1cm"
+        graph.aspect.val = 1
 
         label = graph.Add("label")
 
@@ -108,7 +109,7 @@ def scatter(cond, form, save_pdf=False):
         xy.markerSize.val = "3pt"
 
         if form == "rank":
-            x_axis.label.val = "O-LIFE subscale rank (1 = lowest)"
+            x_axis.label.val = "O-LIFE subscale (rank; 1 = lowest)"
         else:
             x_axis.label.val = "O-LIFE subscale score"
 
@@ -151,10 +152,10 @@ def scatter(cond, form, save_pdf=False):
             y_axis.min.val = -10
             y_axis.max.val = 105
 
-            x_axis.MajorTicks.manualTicks.val = [1] + range(10, 83, 10) + [93]
+            x_axis.MajorTicks.manualTicks.val = [1] + range(20, 83, 20) + [93]
             x_axis.MinorTicks.hide.val = True
 
-            y_axis.MajorTicks.manualTicks.val = [1] + range(10, 83, 10) + [93]
+            y_axis.MajorTicks.manualTicks.val = [1] + range(20, 83, 20) + [93]
             y_axis.MinorTicks.hide.val = True
 
     if save_pdf:
