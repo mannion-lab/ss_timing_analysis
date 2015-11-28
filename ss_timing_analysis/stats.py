@@ -56,7 +56,7 @@ def correlations():
     #--------
     # 2. simultaneous, orth x olife
 
-    # sim, par - sim, orth
+    # sim, orth
     sim_orth = data[:, 1, 0]
 
     print "Simultaneous, orth x O-LIFE total:"

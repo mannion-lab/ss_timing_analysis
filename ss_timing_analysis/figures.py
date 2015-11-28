@@ -39,7 +39,7 @@ def scatter(cond, form, save_pdf=False):
     elif cond == "sim_orth":
         data = data[:, 1, 0]
     elif cond == "lead":
-        data = data[:, 0, 1] - data[:, 0, 0]
+        data = (data[:, 1, 1] - data[:, 1, 0]) - (data[:, 0, 1] - data[:, 0, 0])
 
     if form == "rank":
         data = scipy.stats.rankdata(data)
@@ -419,6 +419,154 @@ def scatter_sub(save_pdf=False):
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
+
+
+def pairwise_corr(save_pdf=False):
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    page = embed.Root.Add("page")
+
+    page.width.val = "18cm"
+    page.height.val = "15cm"
+
+    grid = page.Add("grid")
+
+    grid.rows.val = 4
+    grid.columns.val = 4
+
+    grid.leftMargin.val = grid.rightMargin.val = "0cm"
+    grid.topMargin.val = "0cm"
+    grid.bottomMargin.val = "0.1cm"
+
+#    y_max = [20, 22, 15, 17]
+
+    ss_nice = [
+        "Unusual\\\\experiences",
+        "Cognitive\\\\disorganisation",
+        "Introvertive\\\\anhedonia",
+        "Impulsive\\\\nonconformity"
+    ]
+
+    for (i_row, row_sub) in enumerate(
+        ("un_ex", "cog_dis", "int_anh", "imp_non")
+    ):
+
+        row_ss = ss_timing_analysis.dem.get_olife_subscale(
+            row_sub,
+            exclude=True
+        )
+
+        row_ss = scipy.stats.rankdata(row_ss)
+
+        for (i_col, col_sub) in enumerate(
+            ("un_ex", "cog_dis", "int_anh", "imp_non")
+        ):
+
+            col_ss = ss_timing_analysis.dem.get_olife_subscale(
+                col_sub,
+                exclude=True
+            )
+
+            col_ss = scipy.stats.rankdata(col_ss)
+
+            graph = grid.Add("graph", autoadd=False)
+            graph.leftMargin.val = graph.rightMargin.val = "0.3cm"
+            graph.bottomMargin.val = graph.topMargin.val = "0.3cm"
+            graph.aspect.val = 1
+
+            x_axis = graph.Add("axis")
+            y_axis = graph.Add("axis")
+
+            if i_col < i_row:
+
+                print scipy.stats.pearsonr(row_ss, col_ss)
+
+                xy = graph.Add("xy")
+
+                xy.xData.val = row_ss
+                xy.yData.val = col_ss
+
+                xy.PlotLine.hide.val = True
+                xy.MarkerFill.transparency.val = 60
+                xy.MarkerLine.hide.val = True
+                xy.markerSize.val = "3pt"
+
+#                x_axis.label.val = ss_nice[i_row]
+#                y_axis.label.val = ss_nice[i_col]
+
+                x_axis.min.val = -10
+                x_axis.max.val = 105
+
+                y_axis.min.val = -10
+                y_axis.max.val = 105
+
+                x_axis.MajorTicks.manualTicks.val = [1] + range(20, 83, 20) + [93]
+                x_axis.MinorTicks.hide.val = True
+
+                y_axis.MajorTicks.manualTicks.val = [1] + range(20, 83, 20) + [93]
+                y_axis.MinorTicks.hide.val = True
+
+            else:
+
+                for ax in (x_axis, y_axis):
+                    ax.autoMirror.val = True
+                    ax.MajorTicks.hide.val = True
+                    ax.MinorTicks.hide.val = True
+                    ax.TickLabels.hide.val = True
+
+                label = graph.Add("label")
+                label.alignHorz.val = "centre"
+                label.alignVert.val = "centre"
+
+                if i_row == i_col:
+                    label.label.val = ss_nice[i_row]
+
+                else:
+                    (r, p) = scipy.stats.pearsonr(row_ss, col_ss)
+
+                    r = np.round(r, 2)
+
+                    r_str = "{r:.02f}".format(r=r)
+
+                    p = np.round(p, 3)
+
+                    if p < 0.001:
+                        p_str = "< 0.001"
+                    else:
+                        p_str = "= {p:.03f}".format(p=p)
+
+                    label.label.val = "\\textit{{r}} = {r:s}\\\\ \\textit{{p}} {p:s}".format(
+                        r=r_str, p=p_str
+                    )
+
+
+    if save_pdf:
+
+        pdf_path = os.path.join(
+            conf.figures_path,
+            "ss_timing_pairwise.pdf"
+        )
+
+        embed.Export(pdf_path)
+
+        log.info("Saving " + pdf_path + "...")
+
+        (stem, _) = os.path.splitext(pdf_path)
+
+        vsz_path = stem + ".vsz"
+
+        embed.Save(vsz_path)
+
+        log.info("Saving " + vsz_path + "...")
+
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
+
+
 
 def norms_comparison(save_pdf=False):
 

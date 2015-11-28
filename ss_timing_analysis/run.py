@@ -49,7 +49,8 @@ def main():
         "norms_comparison",
         "sim_scatter_subscales",
         "stats",
-        "descriptives"
+        "descriptives",
+        "pairwise_corr"
     ]
 
     parser.add_argument(
@@ -144,6 +145,9 @@ def main():
 
     elif args.analysis == "sim_scatter_subscales":
         ss_timing_analysis.figures.scatter_sub(save_pdf=True)
+
+    elif args.analysis == "pairwise_corr":
+        ss_timing_analysis.figures.pairwise_corr(save_pdf=True)
 
     elif args.analysis == "stats":
         ss_timing_analysis.stats.correlations()
