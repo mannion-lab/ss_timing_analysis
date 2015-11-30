@@ -16,6 +16,51 @@ import ss_timing_analysis.group_data
 import ss_timing_analysis.group_fit
 import ss_timing_analysis.dem
 
+def _save(embed, conf, name_str, dpi=600, page=0, multi_dpi=150):
+
+    for ext in [".pdf", ".png", ".tiff"]:
+
+        out_path = os.path.join(
+            conf.figures_path,
+            name_str
+        ) + ext
+
+        if ext == ".pdf":
+            embed.Export(out_path, page=page)
+
+        else:
+
+            try:
+                embed.Export(out_path, dpi=dpi, backcolor="white", page=page)
+
+            except RuntimeError as e:
+
+                if "Can only export a single page in this format" in e.message:
+
+                    for page_num in page:
+
+                        page_out_path = os.path.join(
+                            conf.figures_path,
+                            name_str + "_{n:d}".format(n=page_num)
+                        ) + ext
+
+                        embed.Export(
+                            page_out_path,
+                            dpi=multi_dpi,
+                            backcolor="white",
+                            page=page_num
+                        )
+
+        log.info("Saving " + out_path + "...")
+
+    (stem, _) = os.path.splitext(out_path)
+
+    vsz_path = stem + ".vsz"
+
+    embed.Save(vsz_path)
+
+    log.info("Saving " + vsz_path + "...")
+
 
 def scatter(cond, form, save_pdf=False):
 
@@ -106,7 +151,7 @@ def scatter(cond, form, save_pdf=False):
         xy.PlotLine.hide.val = True
         xy.MarkerFill.transparency.val = 60
         xy.MarkerLine.hide.val = True
-        xy.markerSize.val = "3pt"
+        xy.markerSize.val = "2pt"
 
         if form == "rank":
             x_axis.label.val = "O-LIFE subscale (rank; 1 = lowest)"
@@ -159,23 +204,7 @@ def scatter(cond, form, save_pdf=False):
             y_axis.MinorTicks.hide.val = True
 
     if save_pdf:
-
-        pdf_path = os.path.join(
-            conf.figures_path,
-            "ss_timing_{c:s}_{f:s}_scatter.pdf".format(c=cond, f=form)
-        )
-
-        embed.Export(pdf_path)
-
-        log.info("Saving " + pdf_path + "...")
-
-        (stem, _) = os.path.splitext(pdf_path)
-
-        vsz_path = stem + ".vsz"
-
-        embed.Save(vsz_path)
-
-        log.info("Saving " + vsz_path + "...")
+        _save(embed, conf, "ss_timing_{c:s}_{f:s}_scatter".format(c=cond, f=form))
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
@@ -293,23 +322,7 @@ def old_scatter(save_pdf=False, cond="sim"):
     x_axis.lowerPosition.val = 0.075
 
     if save_pdf:
-
-        pdf_path = os.path.join(
-            conf.figures_path,
-            "ss_timing_{c:s}_scatter.pdf".format(c=cond)
-        )
-
-        embed.Export(pdf_path)
-
-        log.info("Saving " + pdf_path + "...")
-
-        (stem, _) = os.path.splitext(pdf_path)
-
-        vsz_path = stem + ".vsz"
-
-        embed.Save(vsz_path)
-
-        log.info("Saving " + vsz_path + "...")
+        _save(embed, conf, "ss_timing_{c:s}_scatter".format(c=cond))
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
@@ -399,23 +412,7 @@ def scatter_sub(save_pdf=False):
 
 
     if save_pdf:
-
-        pdf_path = os.path.join(
-            conf.figures_path,
-            "ss_timing_scatter_sub.pdf"
-        )
-
-        embed.Export(pdf_path)
-
-        log.info("Saving " + pdf_path + "...")
-
-        (stem, _) = os.path.splitext(pdf_path)
-
-        vsz_path = stem + ".vsz"
-
-        embed.Save(vsz_path)
-
-        log.info("Saving " + vsz_path + "...")
+        _save(embed, conf, "ss_timing_scatter_sub")
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
@@ -493,7 +490,7 @@ def pairwise_corr(save_pdf=False):
                 xy.PlotLine.hide.val = True
                 xy.MarkerFill.transparency.val = 60
                 xy.MarkerLine.hide.val = True
-                xy.markerSize.val = "3pt"
+                xy.markerSize.val = "2pt"
 
 #                x_axis.label.val = ss_nice[i_row]
 #                y_axis.label.val = ss_nice[i_col]
@@ -545,23 +542,7 @@ def pairwise_corr(save_pdf=False):
 
 
     if save_pdf:
-
-        pdf_path = os.path.join(
-            conf.figures_path,
-            "ss_timing_pairwise.pdf"
-        )
-
-        embed.Export(pdf_path)
-
-        log.info("Saving " + pdf_path + "...")
-
-        (stem, _) = os.path.splitext(pdf_path)
-
-        vsz_path = stem + ".vsz"
-
-        embed.Save(vsz_path)
-
-        log.info("Saving " + vsz_path + "...")
+        _save(embed, conf, "ss_timing_pairwise")
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
@@ -743,23 +724,7 @@ def norms_comparison(save_pdf=False):
         x_axis.label.val = "Source and gender"
 
     if save_pdf:
-
-        pdf_path = os.path.join(
-            conf.figures_path,
-            "ss_timing_norms_comparison.pdf"
-        )
-
-        embed.Export(pdf_path)
-
-        log.info("Saving " + pdf_path + "...")
-
-        (stem, _) = os.path.splitext(pdf_path)
-
-        vsz_path = stem + ".vsz"
-
-        embed.Save(vsz_path)
-
-        log.info("Saving " + vsz_path + "...")
+        _save(embed, conf, "ss_timing_norms_comparison")
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
@@ -834,23 +799,7 @@ def context_by_gender(save_pdf=False):
         y_axis.label.val = "Context effect for simultaneous (par - orth)"
 
     if save_pdf:
-
-        pdf_path = os.path.join(
-            conf.figures_path,
-            "ss_timing_context_by_gender.pdf"
-        )
-
-        embed.Export(pdf_path)
-
-        log.info("Saving " + pdf_path + "...")
-
-        (stem, _) = os.path.splitext(pdf_path)
-
-        vsz_path = stem + ".vsz"
-
-        embed.Save(vsz_path)
-
-        log.info("Saving " + vsz_path + "...")
+        _save(embed, conf, "ss_timing_context_by_gender")
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
@@ -929,23 +878,7 @@ def context_by_booth(save_pdf=False):
         y_axis.label.val = "Context effect for simultaneous (par - orth)"
 
     if save_pdf:
-
-        pdf_path = os.path.join(
-            conf.figures_path,
-            "ss_timing_context_by_booth.pdf"
-        )
-
-        embed.Export(pdf_path)
-
-        log.info("Saving " + pdf_path + "...")
-
-        (stem, _) = os.path.splitext(pdf_path)
-
-        vsz_path = stem + ".vsz"
-
-        embed.Save(vsz_path)
-
-        log.info("Saving " + vsz_path + "...")
+        _save(embed, conf, "ss_timing_context_by_booth")
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
@@ -1053,23 +986,7 @@ def thresholds(save_pdf=False):
         cond_label.Text.size.val = "8pt"
 
     if save_pdf:
-
-        pdf_path = os.path.join(
-            conf.figures_path,
-            "ss_timing_thresholds.pdf"
-        )
-
-        embed.Export(pdf_path)
-
-        log.info("Saving " + pdf_path + "...")
-
-        (stem, _) = os.path.splitext(pdf_path)
-
-        vsz_path = stem + ".vsz"
-
-        embed.Save(vsz_path)
-
-        log.info("Saving " + vsz_path + "...")
+        _save(embed, conf, "ss_timing_thresholds")
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
@@ -1240,23 +1157,7 @@ def eg_subject(subj_id="p1022", save_pdf=False):
             y_axis.TickLabels.format.val = "%.02f"
 
     if save_pdf:
-
-        pdf_path = os.path.join(
-            conf.figures_path,
-            "ss_timing_eg_subject.pdf"
-        )
-
-        embed.Export(pdf_path)
-
-        log.info("Saving " + pdf_path + "...")
-
-        (stem, _) = os.path.splitext(pdf_path)
-
-        vsz_path = stem + ".vsz"
-
-        embed.Save(vsz_path)
-
-        log.info("Saving " + vsz_path + "...")
+        _save(embed, conf, "ss_timing_eg_subject")
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
@@ -1418,23 +1319,12 @@ def subjects(save_pdf=False):
                 y_axis.TickLabels.format.val = "%.02f"
 
     if save_pdf:
-
-        pdf_path = os.path.join(
-            conf.figures_path,
-            "ss_timing_subjects.pdf"
+        _save(
+            embed,
+            conf,
+            "ss_timing_subjects",
+            page=range(conf.n_all_subj)
         )
-
-        embed.Export(pdf_path, page=range(conf.n_all_subj))
-
-        log.info("Saving " + pdf_path + "...")
-
-        (stem, _) = os.path.splitext(pdf_path)
-
-        vsz_path = stem + ".vsz"
-
-        embed.Save(vsz_path)
-
-        log.info("Saving " + vsz_path + "...")
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
