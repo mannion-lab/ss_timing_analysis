@@ -3,8 +3,6 @@ import collections
 
 import numpy as np
 
-import xlrd
-
 import ss_timing.conf
 
 
@@ -12,9 +10,19 @@ def get_conf(subj_id=""):
 
     conf = ss_timing.conf.get_conf(subj_id)
 
-    conf.demographics_path = "/home/damien/venv_study/ss_timing/demographics"
-    conf.group_data_path = "/home/damien/venv_study/ss_timing/group_data"
-    conf.figures_path = "/home/damien/venv_study/ss_timing/figures"
+    conf.base_path = "/home/damien/venv_study/ss_timing"
+    conf.demographics_path = os.path.join(
+        conf.base_path,
+        "demographics"
+    )
+    conf.group_data_path = os.path.join(
+        conf.base_path,
+        "group_data"
+    )
+    conf.figures_path = os.path.join(
+        conf.base_path,
+        "figures"
+    )
 
     conf.surr_ori_labels = ["Orthogonal", "Parallel"]
     conf.surr_onset_labels = ["Leading surround", "Simultaneous"]
