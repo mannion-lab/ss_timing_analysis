@@ -13,6 +13,7 @@ import ss_timing_analysis.group_fit
 import ss_timing_analysis.figures
 import ss_timing_analysis.dem
 import ss_timing_analysis.stats
+import ss_timing_analysis.ext_s_p
 
 
 def main():
@@ -50,7 +51,8 @@ def main():
         "sim_scatter_subscales",
         "stats",
         "descriptives",
-        "pairwise_corr"
+        "pairwise_corr",
+        "s-p_ratio"
     ]
 
     parser.add_argument(
@@ -154,4 +156,7 @@ def main():
 
     elif args.analysis == "descriptives":
         ss_timing_analysis.stats.descriptives()
+
+    elif args.analysis == "s-p_ratio":
+        ss_timing_analysis.ext_s_p.ratio_check()
 
