@@ -203,6 +203,8 @@ def scatter(cond, form, save_pdf=False):
             y_axis.MajorTicks.manualTicks.val = [1] + range(20, 83, 20) + [93]
             y_axis.MinorTicks.hide.val = True
 
+    label = grid.Add("label")
+
     if save_pdf:
         _save(embed, conf, "ss_timing_{c:s}_{f:s}_scatter".format(c=cond, f=form))
 

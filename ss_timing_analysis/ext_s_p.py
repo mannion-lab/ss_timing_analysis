@@ -11,6 +11,7 @@ import veusz.embed
 import figutils
 
 import ss_timing_analysis.conf
+import ss_timing_analysis.figures
 
 
 def load_data():
@@ -291,10 +292,24 @@ def ratio_check():
 
     grid = page.Add("grid")
     grid.rows.val = 4
-    grid.columns.val = 2
+    grid.columns.val = 3
+
+    grid.leftMargin.val = grid.rightMargin.val = "0cm"
+    grid.bottomMargin.val = grid.topMargin.val = "0cm"
+    grid.topMargin.val = "1cm"
 
     cols = ["red", "blue"]
     symbols = ["circle", "square"]
+
+    ratios = [
+        np.empty((data[n].shape[0], 2))
+        for n in xrange(2)
+    ]
+
+    conds = ["Orth.", "Par."]
+
+    groups = ["Healthy controls", "Schizophrenia"]
+    group_label_pos = [0.965, 0.48]
 
     for i_group in xrange(2):
 
@@ -306,7 +321,7 @@ def ratio_check():
 
             sc = curr_data[:, i_var]
 
-            for graph_type in ["NSxS", "NSx(S/NS)"]:
+            for graph_type in ["NSxS", "NSx(S/NS)", "rank"]:
 
                 graph = grid.Add("graph", autoadd=False)
                 graph.aspect.val = 1
@@ -324,46 +339,74 @@ def ratio_check():
                 if graph_type == "NSxS":
                     xy.yData.val = sc
 
+                    # do a rough calculation of the intercept based on the
+                    # simple method of Ludbrook (2011)
                     b = np.std(sc, ddof=1) / np.std(ns, ddof=1)
-
                     a = np.mean(sc) - b * np.mean(ns)
 
                     x_max = np.max(ns)
                     y_max = np.max(sc)
 
-                    l_x = np.linspace(0, x_max, 100)
-                    l_y = l_x * b + a
+                    x_axis.label.val = "No surround"
+                    y_axis.label.val = conds[i_var - 1] + " surround"
 
-                    f = graph.Add("xy")
-
-                    f.xData.val = l_x
-                    f.yData.val = l_y
-                    f.PlotLine.hide.val = False
-                    f.markerSize.val = "0pt"
-                    f.MarkerFill.hide.val = True
-                    f.MarkerLine.color.val = cols[i_group]
-                    f.marker.val = symbols[i_group]
+                    y_axis.min.val = 0.0
 
                 elif graph_type == "NSx(S/NS)":
-                    xy.yData.val = np.log10(sc / ns)
 
-                    print scipy.stats.spearmanr(ns, np.log10(sc / ns))
+                    ratio = np.log10(sc / ns)
+
+                    xy.yData.val = ratio
+
+                    print scipy.stats.pearsonr(ns, ratio)[0] ** 2
+
+                    ratios[i_group][:, i_var - 1] = ratio
+
+                    x_axis.label.val = "No surround"
+                    y_axis.label.val = "log({c:s} / No surround)".format(
+                        c=conds[i_var - 1]
+                    )
+
+                elif graph_type == "rank":
+
+                    ns_rank = scipy.stats.rankdata(ns)
+                    ratio_rank = scipy.stats.rankdata(
+                        ratios[i_group][:, i_var - 1]
+                    )
+
+                    xy.xData.val = ns_rank
+                    xy.yData.val = ratio_rank
+
+                    x_axis.label.val = "No surround rank"
+                    y_axis.label.val = "log({c:s} / No surround) rank".format(
+                        c=conds[i_var - 1]
+                    )
+
+                    y_axis.min.val = 0.0
 
                 xy.PlotLine.hide.val = True
                 xy.markerSize.val = "2pt"
-                xy.MarkerFill.hide.val = True
-                xy.MarkerLine.color.val = cols[i_group]
+                xy.MarkerLine.hide.val = True
+                xy.MarkerFill.color.val = cols[i_group]
                 xy.marker.val = symbols[i_group]
+                xy.MarkerFill.transparency.val = 60
 
                 x_axis.min.val = 0
                 #y_axis.min.val = 0
 
+                x_axis.MinorTicks.hide.val = True
+                y_axis.MinorTicks.hide.val = True
+
+        label = page.Add("label")
+
+        label.label.val = groups[i_group]
+        label.yPos.val = group_label_pos[i_group]
+        label.alignHorz.val = "centre"
+        label.Text.color.val = cols[i_group]
+        label.Text.bold.val = True
+
+    ss_timing_analysis.figures._save(embed, conf, "ss_timing_s-p_ratio")
+
     embed.EnableToolbar(True)
     embed.WaitForClose()
-
-
-
-
-
-
 
