@@ -308,7 +308,7 @@ def ratio_check():
 
     conds = ["Orth.", "Par."]
 
-    groups = ["Healthy controls", "Schizophrenia"]
+    groups = ["Controls", "Schizophrenia"]
     group_label_pos = [0.965, 0.48]
 
     for i_group in xrange(2):
@@ -396,6 +396,8 @@ def ratio_check():
 
                 x_axis.MinorTicks.hide.val = True
                 y_axis.MinorTicks.hide.val = True
+
+                y_axis.TickLabels.format.val = "%.3g"
 
         label = page.Add("label")
 

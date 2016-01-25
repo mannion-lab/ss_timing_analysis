@@ -84,7 +84,8 @@ def scatter(cond, form, save_pdf=False):
     elif cond == "sim_orth":
         data = data[:, 1, 0]
     elif cond == "lead":
-        data = (data[:, 1, 1] - data[:, 1, 0]) - (data[:, 0, 1] - data[:, 0, 0])
+        #data = (data[:, 1, 1] - data[:, 1, 0]) - (data[:, 0, 1] - data[:, 0, 0])
+        data = data[:, 0, 1] - data[:, 0, 0]
 
     if form == "rank":
         data = scipy.stats.rankdata(data)
@@ -151,7 +152,7 @@ def scatter(cond, form, save_pdf=False):
         xy.PlotLine.hide.val = True
         xy.MarkerFill.transparency.val = 60
         xy.MarkerLine.hide.val = True
-        xy.markerSize.val = "2pt"
+        xy.markerSize.val = "3pt"
 
         if form == "rank":
             x_axis.label.val = "O-LIFE subscale (rank; 1 = lowest)"
@@ -202,8 +203,6 @@ def scatter(cond, form, save_pdf=False):
 
             y_axis.MajorTicks.manualTicks.val = [1] + range(20, 83, 20) + [93]
             y_axis.MinorTicks.hide.val = True
-
-    label = grid.Add("label")
 
     if save_pdf:
         _save(embed, conf, "ss_timing_{c:s}_{f:s}_scatter".format(c=cond, f=form))
