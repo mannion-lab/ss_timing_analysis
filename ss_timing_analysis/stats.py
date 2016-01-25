@@ -86,9 +86,11 @@ def correlations():
 
     #---------
     # 3. (sim, SS) - (delay, SS) x olife
-    ss_diff = (data[:, 1, 1] - data[:, 1, 0]) - (data[:, 0, 1] - data[:, 0, 0])
+    #ss_diff = (data[:, 1, 1] - data[:, 1, 0]) - (data[:, 0, 1] - data[:, 0, 0])
+    ss_diff = data[:, 0, 1] - data[:, 0, 0]
 
-    print "(SS @ sim) - (SS @ delay) x O-LIFE total:"
+#    print "(SS @ sim) - (SS @ delay) x O-LIFE total:"
+    print "SS @ delay x O-LIFE total:"
 
     (r, p) = corr_func(olife_total, ss_diff)
 
@@ -103,7 +105,8 @@ def correlations():
 
         sub_total = ss_timing_analysis.dem.get_olife_subscale(subscale)
 
-        print "(SS @ sim) - (SS @ delay) x O-LIFE {s:s}:".format(s=subscale)
+        #print "(SS @ sim) - (SS @ delay) x O-LIFE {s:s}:".format(s=subscale)
+        print "SS @ delay x O-LIFE {s:s}:".format(s=subscale)
 
         (r, p) = corr_func(sub_total, ss_diff)
 
