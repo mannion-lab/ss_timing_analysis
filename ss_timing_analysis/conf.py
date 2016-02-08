@@ -79,4 +79,6 @@ def get_conf(subj_id=""):
     conf.n_boot = 10000
     conf.boot_seed = 2118217324
 
+    conf.subscales = ["int_anh", "imp_non", "cog_dis", "un_ex"]
+
     return conf
