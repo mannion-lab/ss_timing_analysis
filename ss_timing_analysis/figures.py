@@ -15,6 +15,8 @@ import ss_timing_analysis.conf
 import ss_timing_analysis.group_data
 import ss_timing_analysis.group_fit
 import ss_timing_analysis.dem
+import ss_timing_analysis.stats
+
 
 def _save(embed, conf, name_str, dpi=600, page=0, multi_dpi=150):
 
@@ -1326,6 +1328,184 @@ def subjects(save_pdf=False):
             "ss_timing_subjects",
             page=range(conf.n_all_subj)
         )
+
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
+
+
+def bf(save_pdf=False):
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    # N x (r, bf)
+    r_bf = np.loadtxt(os.path.join(conf.base_path, "ss_timing_bf.txt"))
+
+    # analysis (3) x subscale (4)
+    corr = ss_timing_analysis.stats.correlations()[..., 0]
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    page = embed.Root.Add("page")
+    page.width.val = "8cm"
+    page.height.val = "8.5cm"
+
+    graph = page.Add("graph", autoadd=False)
+
+    graph.bottomMargin.val = "2.5cm"
+    graph.topMargin.val = "0.2cm"
+    graph.leftMargin.val = "0.9cm"
+    graph.rightMargin.val = "1.4cm"
+
+    x_axis = graph.Add("axis")
+    y_axis = graph.Add("axis")
+
+    subscale_colours = [
+        "#e41a1c",
+        "#377eb8",
+        "#4daf4a",
+        "#984ea3"
+    ]
+
+    ana_markers = [
+        "circle",
+        "square",
+        "triangle"
+    ]
+
+    ana_sizes = [
+        4,
+        3.54,
+        5.01
+    ]
+
+    for i_sub in xrange(4):
+
+        for i_ana in xrange(3):
+
+            xy = graph.Add("xy")
+
+            xy.xData.val = corr[i_ana, i_sub]
+
+            # need to find the nearest bayes factor
+            i_bf = np.argmin(np.abs(corr[i_ana, i_sub] - r_bf[:, 0]))
+            bf = r_bf[i_bf, 1]
+            xy.yData.val = np.log(bf)
+
+            xy.MarkerLine.hide.val = False
+            #xy.MarkerLine.transparency.val = 20
+            xy.MarkerFill.hide.val = True
+            xy.PlotLine.hide.val = True
+            xy.markerSize.val = "{s:.3f}pt".format(s=ana_sizes[i_ana] * 0.7)
+            xy.MarkerLine.color.val = subscale_colours[i_sub]
+            xy.marker.val = ana_markers[i_ana]
+            xy.key.val = " "
+
+    bf_xy = graph.Add("xy")
+
+    bf_xy.xData.val = r_bf[:, 0]
+    bf_xy.yData.val = np.log(r_bf[:, 1])
+
+    bf_xy.MarkerFill.hide.val = True
+    bf_xy.MarkerLine.hide.val = True
+
+    log_div = np.log(
+        [30.0, 10.0, 3.0, 1.0, 1 / 3.0, 1 / 10.0, 1 / 30.]
+    )
+
+    div_labels = [
+        "Strong H_1",
+        "Substantial H_1",
+        "Anecdotal H_1",
+        "Anecdotal H_0",
+        "Substantial H_0",
+        "Strong H_0",
+        ""
+    ]
+
+    div_delta = (log_div[0] - log_div[1]) / 2.0
+
+    for (curr_div, div_lbl) in zip(log_div, div_labels):
+
+        xy = graph.Add("xy")
+
+        xy.xData.val = [-0.4, 0.4]
+        xy.yData.val = [curr_div] * 2
+
+        xy.MarkerFill.hide.val = True
+        xy.MarkerLine.hide.val = True
+        xy.PlotLine.style.val = "dash1"
+        xy.color.val = "grey"
+
+        if div_lbl != "":
+
+            lbl = graph.Add("label")
+
+            lbl.label.val = div_lbl
+            lbl.xPos.val = 0.361
+            lbl.yPos.val = curr_div - div_delta
+            lbl.alignVert.val = "centre"
+            lbl.positioning.val = "axes"
+
+
+    hoff = 0.1
+
+    key = graph.Add("key")
+
+    key.Border.hide.val = True
+    key.keyLength.val = "0.415cm"
+    key.columns.val = 4
+    key.horzPosn.val = "manual"
+    key.vertPosn.val = "manual"
+    key.horzManual.val = 0.188 + hoff
+    key.vertManual.val = -0.397
+
+    col_start = 0.224 + hoff
+    col_delta = 0.409 - 0.224
+
+    for (i_col, ss) in enumerate(conf.subscales):
+
+        lbl = graph.Add("label")
+
+        lbl.label.val = "".join(ss.title().split("_"))
+        lbl.xPos.val = col_start + i_col * col_delta
+        lbl.yPos.val = -0.233
+        lbl.alignHorz.val = "centre"
+        lbl.Text.size.val = "7pt"
+
+
+    ana_labels = [
+        "Context (sim.)",
+        "Orthogonal (sim.)",
+        "Context (delay)"
+    ]
+
+    row_start = -0.293
+    row_delta = -0.293 - -0.341
+
+    for (i_row, ana_label) in enumerate(ana_labels):
+
+        lbl = graph.Add("label")
+
+        lbl.label.val = ana_label
+        lbl.xPos.val = 0.151 + hoff
+        lbl.yPos.val = row_start - i_row * row_delta
+        lbl.alignHorz.val = "right"
+        lbl.Text.size.val = "7pt"
+
+    x_axis.label.val = "Correlation (r_{s})"
+    x_axis.TickLabels.format.val = "%.1f"
+    x_axis.Label.offset.val = "2pt"
+
+    y_axis.min.val = -4
+    y_axis.max.val = 4
+    y_axis.label.val = "log(Bayes Factor)"
+    y_axis.TickLabels.format.val = "%.1f"
+    y_axis.Label.offset.val = "2pt"
+    y_axis.MinorTicks.hide.val = True
+
+    if save_pdf:
+        _save(embed, conf, "ss_timing_bf")
 
     embed.EnableToolbar(True)
     embed.WaitForClose()
