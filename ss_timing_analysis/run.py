@@ -52,7 +52,8 @@ def main():
         "stats",
         "descriptives",
         "pairwise_corr",
-        "s-p_ratio"
+        "s-p_ratio",
+        "bf"
     ]
 
     parser.add_argument(
@@ -160,3 +161,5 @@ def main():
     elif args.analysis == "s-p_ratio":
         ss_timing_analysis.ext_s_p.ratio_check()
 
+    elif args.analysis == "bf":
+        ss_timing_analysis.figures.bf(save_pdf=True)

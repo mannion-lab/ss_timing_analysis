@@ -1493,7 +1493,7 @@ def bf(save_pdf=False):
         lbl.alignHorz.val = "right"
         lbl.Text.size.val = "7pt"
 
-    x_axis.label.val = "Correlation (r_{s})"
+    x_axis.label.val = "Correlation (r)"
     x_axis.TickLabels.format.val = "%.1f"
     x_axis.Label.offset.val = "2pt"
 
