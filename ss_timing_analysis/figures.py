@@ -1068,11 +1068,24 @@ def eg_subject(subj_id="p1022", save_pdf=False):
             # CROSSHAIRS
             pse_y = graph.Add("xy")
             pse_y.xData.val = [0.001, fit[i_onset, i_ori, 0, 0]]
-            pse_y.yData.val = [1 - np.exp(-1) + 0.04] * 2
+            pse_y.yData.val = [
+                conf.psych_func(
+                    fit[i_onset, i_ori, 0, 0],
+                    fit[i_onset, i_ori, 0, 0],
+                    fit[i_onset, i_ori, 0, 1]
+                )
+            ] * 2
 
             pse_x = graph.Add("xy")
             pse_x.xData.val = [fit[i_onset, i_ori, 0, 0]] * 2
-            pse_x.yData.val = [-0.05, 1 - np.exp(-1) + 0.04]
+            pse_x.yData.val = [
+                -0.05,
+                conf.psych_func(
+                    fit[i_onset, i_ori, 0, 0],
+                    fit[i_onset, i_ori, 0, 0],
+                    fit[i_onset, i_ori, 0, 1]
+                )
+            ]
 
             for pse_ax in (pse_y, pse_x):
                 pse_ax.MarkerFill.hide.val = True
@@ -1156,7 +1169,7 @@ def eg_subject(subj_id="p1022", save_pdf=False):
             y_axis.max.val = 1.1
             y_axis.label.val = "Accuracy (prop. correct)"
             y_axis.MinorTicks.hide.val = True
-            y_axis.MajorTicks.manualTicks.val = [0, 0.25, 0.5, 0.67, 1]
+            y_axis.MajorTicks.manualTicks.val = [0, 0.25, 0.5, 0.69, 1]
             y_axis.TickLabels.format.val = "%.02f"
 
     if save_pdf:
@@ -1231,11 +1244,24 @@ def subjects(save_pdf=False):
                 # CROSSHAIRS
                 pse_y = graph.Add("xy")
                 pse_y.xData.val = [0.001, fit[i_subj, i_onset, i_ori, 0, 0]]
-                pse_y.yData.val = [1 - np.exp(-1) + 0.04] * 2
+                pse_y.yData.val = [
+                    conf.psych_func(
+                        fit[i_subj, i_onset, i_ori, 0, 0],
+                        fit[i_subj, i_onset, i_ori, 0, 0],
+                        fit[i_subj, i_onset, i_ori, 0, 1]
+                    )
+                ] * 2
 
                 pse_x = graph.Add("xy")
                 pse_x.xData.val = [fit[i_subj, i_onset, i_ori, 0, 0]] * 2
-                pse_x.yData.val = [-0.05, 1 - np.exp(-1) + 0.04]
+                pse_x.yData.val = [
+                    -0.05,
+                    conf.psych_func(
+                        fit[i_subj, i_onset, i_ori, 0, 0],
+                        fit[i_subj, i_onset, i_ori, 0, 0],
+                        fit[i_subj, i_onset, i_ori, 0, 1]
+                    )
+                ]
 
                 for pse_ax in (pse_y, pse_x):
                     pse_ax.MarkerFill.hide.val = True
@@ -1318,7 +1344,7 @@ def subjects(save_pdf=False):
                 y_axis.max.val = 1.1
                 y_axis.label.val = "Accuracy (prop. correct)"
                 y_axis.MinorTicks.hide.val = True
-                y_axis.MajorTicks.manualTicks.val = [0, 0.25, 0.5, 0.67, 1]
+                y_axis.MajorTicks.manualTicks.val = [0, 0.25, 0.5, 0.69, 1]
                 y_axis.TickLabels.format.val = "%.02f"
 
     if save_pdf:
