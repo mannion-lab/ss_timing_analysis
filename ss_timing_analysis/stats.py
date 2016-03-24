@@ -7,11 +7,12 @@ import ss_timing_analysis.group_fit
 import ss_timing_analysis.dem
 
 
-def correlations():
+def correlations(conf=None):
+
+    if conf is None:
+        conf = ss_timing_analysis.conf.get_conf()
 
     corr_func = scipy.stats.spearmanr
-
-    conf = ss_timing_analysis.conf.get_conf()
 
     all_r_p = np.empty(
         (
