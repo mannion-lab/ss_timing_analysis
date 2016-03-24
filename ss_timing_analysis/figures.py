@@ -1362,12 +1362,13 @@ def subjects(save_pdf=False):
 def bf(save_pdf=False):
 
     conf = ss_timing_analysis.conf.get_conf()
+    conf.n_boot = 1
 
     # N x (r, bf)
     r_bf = np.loadtxt(os.path.join(conf.base_path, "ss_timing_bf.txt"))
 
     # analysis (3) x subscale (4)
-    corr = ss_timing_analysis.stats.correlations()[..., 0]
+    corr = ss_timing_analysis.stats.correlations(conf)[..., 0]
 
     embed = veusz.embed.Embedded("veusz")
     figutils.set_veusz_style(embed)
@@ -1416,6 +1417,7 @@ def bf(save_pdf=False):
             # need to find the nearest bayes factor
             i_bf = np.argmin(np.abs(corr[i_ana, i_sub] - r_bf[:, 0]))
             bf = r_bf[i_bf, 1]
+            print i_sub, i_ana, np.log(bf)
             xy.yData.val = np.log(bf)
 
             xy.MarkerLine.hide.val = False
