@@ -167,6 +167,49 @@ def load_fit_data(exclude=False):
     return (fit_params, fit_fine, fit_boot)
 
 
+def save_fit_alpha_2d():
+    """Saves the fitted alpha values to a TSV file. Not required for this
+    paper, but useful for teaching."""
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    (fit_data, _, _) = load_fit_data(exclude=True)
+
+    # ends up as 93 x 2 x 2
+    fit_data = fit_data[..., 0, 0]
+
+    fit_data = np.log10(fit_data)
+
+    # convert to a 2d array - the slow way, but hopefully more sure of its
+    # correctness...
+    data = []
+
+    header = ["ID", "pre_orth", "pre_par", "sim_orth", "sim_par"]
+
+    for (i_subj, subj_id) in enumerate(conf.subj_ids):
+
+        subj_data = [int(subj_id[1:])]
+
+        for i_onset in xrange(conf.n_surr_onsets):
+            for i_ori in xrange(conf.n_surr_oris):
+
+                subj_data.append(fit_data[i_subj, i_onset, i_ori])
+
+        data.append(subj_data)
+
+    data_path = os.path.join(
+        conf.group_data_path,
+        "ss_timing_data_log_thresh_2d.tsv"
+    )
+
+    np.savetxt(
+        data_path,
+        np.array(data),
+        delimiter="\t",
+        header="\t".join(header)
+    )
+
+
 def group_fit_exclusions():
 
     conf = ss_timing_analysis.conf.get_conf()
