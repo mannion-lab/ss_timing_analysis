@@ -4,6 +4,8 @@ import collections
 
 import numpy as np
 
+import tabulate
+
 import ss_timing_analysis.conf
 
 
@@ -53,7 +55,7 @@ def export_demographics():
 
     conf = ss_timing_analysis.conf.get_conf()
 
-    dem = demographics(conf)
+    dem = demographics()
 
     data_path = os.path.join(
         conf.group_data_path,
@@ -109,7 +111,7 @@ def print_demographics(exclude=True):
 
     conf = ss_timing_analysis.conf.get_conf()
 
-    dem = demographics(conf)
+    dem = demographics()
 
     if exclude:
         subj_ids = conf.subj_ids
@@ -132,6 +134,15 @@ def print_demographics(exclude=True):
         print "\t{a:d}: {c:d}/{n:d}".format(
             a=age, c=count, n=n
         )
+
+    ###
+    print "Age table:"
+
+    print tabulate.tabulate(
+        tabular_data=age_counts.items(),
+        headers=["Age", "Count"],
+        tablefmt="latex"
+    )
 
     ###
     print "Gender:"
@@ -168,7 +179,7 @@ def print_olt_descriptives(exclude=True):
 
     conf = ss_timing_analysis.conf.get_conf()
 
-    dem = demographics(conf)
+    dem = demographics()
 
     if exclude:
         subj_ids = conf.subj_ids
