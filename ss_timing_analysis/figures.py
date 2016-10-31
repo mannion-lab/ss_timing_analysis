@@ -99,7 +99,7 @@ def scatter(cond, form, save_pdf=False):
 
     page = embed.Root.Add("page")
 
-    page.width.val = "14cm"
+    page.width.val = "13.5cm"
     page.height.val = "10cm"
 
     grid = page.Add("grid")
@@ -904,8 +904,8 @@ def thresholds(save_pdf=False):
     figutils.set_veusz_style(embed)
 
     page = embed.Root.Add("page")
-    page.width.val = "18cm"
-    page.height.val = "8cm"
+    page.width.val = "13.5cm"
+    page.height.val = "6cm"
 
     # separate columns for simultaneous and leading
     grid = page.Add("grid")
