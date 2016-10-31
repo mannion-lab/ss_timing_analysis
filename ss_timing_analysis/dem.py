@@ -242,6 +242,30 @@ def demographics():
     return dem
 
 
+def print_ambig_items():
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    dem = demographics()
+
+    for (subj_id, subj_dem) in dem.iteritems():
+
+        for subscale in conf.subscales:
+
+            responses = subj_dem[subscale]["orig_data"]
+
+            for ambig in ("A", "B"):
+
+                ambig_count = responses.count(ambig)
+
+                if ambig_count > 0:
+                    print "{s:s}, {a:s}, {t:s}, {n:d}".format(
+                        s=subj_id, a=subscale, t=ambig, n=ambig_count
+                    )
+
+
+
+
 def _score_olife(data):
 
     assert len(data) == 104

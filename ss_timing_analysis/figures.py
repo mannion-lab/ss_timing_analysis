@@ -1538,3 +1538,74 @@ def bf(save_pdf=False):
     embed.EnableToolbar(True)
     embed.WaitForClose()
 
+
+def test_retest():
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    (fit_params, _, _) = ss_timing_analysis.group_fit.load_fit_data(
+        exclude=True
+    )
+
+    alphas = fit_params[..., 0, 0]
+
+    orth_alphas = alphas[:, :, 0]
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    page = embed.Root.Add("page")
+
+    page.width.val = "10cm"
+    page.height.val = "10cm"
+
+    graph = page.Add("graph", autoadd=False)
+
+    graph.aspect.val = 1
+
+    x_axis = graph.Add("axis")
+    y_axis = graph.Add("axis")
+
+    xy = graph.Add("xy")
+
+    xy.xData.val = orth_alphas[:, 0]
+    xy.yData.val = orth_alphas[:, 1]
+
+    xy.PlotLine.hide.val = True
+    xy.MarkerLine.hide.val = True
+    xy.MarkerFill.transparency.val = 60
+    xy.MarkerLine.hide.val = True
+    xy.markerSize.val = "2pt"
+
+    min_val = 0.008
+    max_val = 0.025
+
+    unity = graph.Add("xy")
+
+    unity.xData.val = unity.yData.val = [min_val, max_val]
+    unity.MarkerLine.hide.val = unity.MarkerFill.hide.val = True
+    unity.PlotLine.style.val = "dashed"
+    unity.PlotLine.color.val = "grey"
+
+    x_axis.min.val = y_axis.min.val = min_val
+    x_axis.max.val = y_axis.max.val = max_val
+
+    x_axis.log.val = y_axis.log.val = True
+
+    x_axis.label.val = "Threshold contrast (orthogonal 'leading surround')"
+    y_axis.label.val = "Threshold contrast (orthogonal 'simultaneous surround')"
+
+    (r, _) = scipy.stats.pearsonr(orth_alphas[:, 0], orth_alphas[:, 1])
+
+    r_label = graph.Add("label")
+
+    r_label.label.val = "\\textit{{r}} = {r:.3f}".format(r=r)
+
+    r_label.xPos.val = 0.075
+    r_label.yPos.val = 0.9
+
+    _save(embed, conf, "ss_timing_test-retest")
+
+    embed.WaitForClose()
+
+
