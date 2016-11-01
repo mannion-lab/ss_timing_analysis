@@ -111,50 +111,119 @@ def check():
             print "\t{m:s}".format(m=", ".join(map(str, np.mean(s, axis=0))))
 
 
-def ratio_anova():
+def ratio_contrasts():
 
-    ratios = get_ratios()
-
-    data_dict = {
-        "SUBJECT": [],
-        "GROUP": [],
-        "SURR": [],
-        "RATIO": []
-    }
-
-    subj_num =  1
-
-    for (grp_data, grp) in zip(ratios, ("C", "P")):
-
-        for i_subj in xrange(grp_data.shape[0]):
-
-            for (i_s, sc) in enumerate(("O", "P")):
-
-                data_dict["SUBJECT"].append(subj_num)
-                data_dict["GROUP"].append(grp)
-                data_dict["SURR"].append(sc)
-                data_dict["RATIO"].append(grp_data[i_subj, i_s])
-
-            subj_num += 1
-
-    df = pyvttbl.DataFrame(data_dict)
-
-    anova = df.anova(
-        dv="RATIO",
-        wfactors=["SURR"],
-        bfactors=["GROUP"]
-    )
-
-    for factors in (("GROUP",), ("SURR", ), ("SURR", "GROUP")):
-
-        af = anova[factors]
-
-        print factors
-        print "\tF({a:.0f},{b:.0f}) = {f:.4f}, p = {p:.4f}".format(
-            a=af["df"], b=af["dfe"], f=af["F"], p=af["p"]
+    def _print(id_str, t, p, df):
+        print id_str + ":"
+        print "\tt({n:d}) = {t:.4f}, p = {p:.4f}".format(
+            n=df, t=t, p=p
         )
 
-    return anova
+    (c_ratios, p_ratios)  = get_ratios()
+
+    ratios = np.vstack((c_ratios, p_ratios))
+
+    # main effect of condition
+    (t, p) = scipy.stats.ttest_rel(ratios[:, 0], ratios[:, 1])
+
+    _print("Condition ME", t, p, ratios.shape[0] - 2)
+
+    # main effect of group
+    (t, p) = scipy.stats.ttest_ind(
+        np.mean(c_ratios, axis=1),
+        np.mean(p_ratios, axis=1)
+    )
+
+    _print("Group ME", t, p, ratios.shape[0] - 2)
+
+    # interaction
+
+    # difference of differences
+    c_diff = c_ratios[:, 0] - c_ratios[:, 1]
+    p_diff = p_ratios[:, 0] - p_ratios[:, 1]
+
+    (t, p) = scipy.stats.ttest_ind(c_diff, p_diff)
+
+    _print("Group x Condition", t, p, ratios.shape[0] - 2)
+
+    # post-hoc
+
+    # diff
+    for (i_diff, diff_str) in enumerate(("OS", "PS")):
+
+        (t, p) = scipy.stats.ttest_ind(
+            c_ratios[:, i_diff],
+            p_ratios[:, i_diff]
+        )
+
+        _print(diff_str, t, p, ratios.shape[0] - 2)
+
+
+def ratio_perm(n_perm=10000):
+
+    (c_ratios, p_ratios) = get_ratios()
+    ratios = np.vstack((c_ratios, p_ratios))
+
+    # main effect of condition
+    perm_dist = np.empty((n_perm))
+    perm_dist.fill(np.nan)
+
+    for i_perm in xrange(n_perm):
+
+        signs = np.random.choice(
+            (-1, +1),
+            ratios.shape[0],
+            replace=True
+        )
+
+        diffs = ratios[:, 0] - ratios[:, 1]
+
+        diffs *= signs
+
+        perm_dist[i_perm] = np.mean(diffs)
+
+    p = scipy.stats.percentileofscore(
+        perm_dist,
+        np.mean(ratios[:, 0] - ratios[:, 1])
+    )
+
+    p = (100 - (p / 2.0)) / 100.0
+
+    # main effect of group
+    n_c = c_ratios.shape[0]
+    n_p = p_ratios.shape[0]
+
+    b_ratios = np.vstack((c_ratios, p_ratios))
+    b_ratios = np.mean(b_ratios, axis=1)
+
+    perm_dist = np.empty((n_perm))
+    perm_dist.fill(np.nan)
+
+    for i_perm in xrange(n_perm):
+
+        i = np.random.permutation(n_c + n_p)
+
+        i_c = i[:n_c]
+        i_p = i[n_c:]
+
+        assert len(i_p) == n_p
+
+        perm_diff = (
+            np.mean(b_ratios[i_c]) -
+            np.mean(b_ratios[i_p])
+        )
+
+        perm_dist[i_perm] = perm_diff
+
+    p = scipy.stats.percentileofscore(
+        perm_dist,
+        np.mean(b_ratios[:n_c]) - np.mean(b_ratios[n_c:])
+    )
+
+    p = (100 - (p / 2.0)) / 100.0
+
+    return perm_dist, p
+
 
 
 def write_ratios_for_spss():
@@ -218,7 +287,7 @@ def regress(x, y, n_boot=10000):
         # 'type II regression', following Ludbrook (2011), since there is error in
         # both x and y
 
-        b = np.std(y[i_subj]) / np.std(x[i_subj])
+        b = np.std(y[i_subj], ddof=1) / np.std(x[i_subj], ddof=1)
 
         a = np.mean(y[i_subj]) - b * np.mean(x[i_subj])
 
