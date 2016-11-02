@@ -43,6 +43,10 @@ def load_data():
 
             threshold = float(row[header.index("Threshold")])
 
+            # as per the paper, but applied already but not to all?
+            if threshold > 75.0:
+                threshold = 75.0
+
             if "group" in data_dict[subj_id].keys():
                 assert group == data_dict[subj_id]["group"]
 
@@ -159,6 +163,20 @@ def ratio_contrasts():
         _print(diff_str, t, p, ratios.shape[0] - 2)
 
 
+def regress_perm(n_perm=10000):
+
+    data = load_data()
+
+    for (i_group, group) in enumerate(data):
+
+        perm_dist = np.empty((n_perm))
+        perm_dist.fill(np.nan)
+
+        for i_perm in xrange(n_perm):
+
+            pass
+
+
 def ratio_perm(n_perm=10000):
 
     (c_ratios, p_ratios) = get_ratios()
@@ -235,6 +253,10 @@ def write_ratios_for_spss():
     data_path = os.path.join(conf.base_path, "ss_timing_yoon_spss.tsv")
 
     with open(data_path, "w") as data_file:
+
+        data_file.write(
+            "\t".join(["group", "o", "p"]) + "\n"
+        )
 
         for (grp_data, grp) in zip(ratios, ("C", "P")):
 
@@ -353,6 +375,83 @@ def regress_ci(coef, n_x=100):
     assert np.sum(np.isnan(y)) == 0
 
     return y
+
+
+def figure_betas(betas=None):
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    if betas is None:
+        betas = regress_descriptives()
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    page = embed.Root.Add("page")
+
+    page.width.val = "12cm"
+    page.height.val = "10cm"
+
+    graph = page.Add("graph", autoadd=False)
+
+    x_axis = graph.Add("axis")
+    y_axis = graph.Add("axis")
+
+    for (i_group, group) in enumerate(("C", "P")):
+
+        data = betas[i_group, ...]
+
+        data_str = group
+
+        embed.SetData(
+            data_str,
+            data[:, 0],
+            poserr=abs(data[:, 2] - data[:, 0]),
+            negerr=abs(data[:, 0] - data[:, 1])
+        )
+
+        x_str = group + "_labels"
+
+        x = [group + surr for surr in [", Orth.", ", Par."]]
+
+        embed.SetDataText(
+            x_str,
+            x
+        )
+
+        xy = graph.Add("xy")
+
+        x_start = i_group * 2 + 0.5
+
+        xy.xData.val = [x_start, x_start + 1]
+        xy.yData.val = data_str
+        xy.labels.val = x_str
+        xy.Label.hide.val = True
+
+
+    x_axis.min.val = 0
+    x_axis.max.val = 4
+
+    x_axis.MinorTicks.hide.val = True
+    x_axis.MajorTicks.manualTicks.val = [x + 0.5 for x in range(4)]
+
+    y_axis.min.val = 0.0
+
+    x_axis.mode.val = "labels"
+
+    x_axis.label.val = "Group, condition"
+    y_axis.label.val = "Slope of regression against no-surround"
+
+    stem = os.path.join(
+        conf.figures_path,
+        "ss_timing_yoon_betas"
+    )
+
+    embed.Zoom(0.5)
+    embed.Save(stem + ".vsz")
+    embed.Export(stem + ".pdf")
+
+    embed.WaitForClose()
 
 
 def figure():
@@ -503,6 +602,37 @@ def perm_regress_test():
             p_coef = py / px
 
             boot_diff[i_boot, i_ori - 1] = np.mean(c_coef) - np.mean(p_coef)
+
+    return boot_diff
+
+
+def bootstrap_regress_test_cond():
+
+    (c_data, p_data) = load_data()
+    data = (c_data, p_data)
+
+    n_c = c_data.shape[0]
+    n_p = p_data.shape[0]
+
+    boot_diff = np.empty((10000, 2))
+    boot_diff.fill(np.nan)
+
+    for i_boot in xrange(10000):
+
+        for (i_g, n_g) in enumerate((n_c, n_p)):
+
+            i = np.random.choice(n_g, n_g, replace=True)
+
+            x = data[i_g][i, 0]
+
+            oy = data[i_g][i, 1]
+            o_coef = regress(x, oy, n_boot=0)[1]
+
+            py = data[i_g][i, 2]
+
+            p_coef = regress(x, py, n_boot=0)[1]
+
+            boot_diff[i_boot, i_g] = o_coef - p_coef
 
     return boot_diff
 
