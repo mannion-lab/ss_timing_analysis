@@ -273,6 +273,39 @@ def get_ratios():
     return (control_ratios, patient_ratios)
 
 
+def regress_descriptives():
+
+    data = load_data()
+
+    coefs = np.empty((2, 2, 3))
+    coefs.fill(np.nan)
+
+    np.random.seed(2724411871)
+
+    for (i_grp, grp_data) in enumerate(data):
+
+        x = grp_data[:, 0]
+
+        for (i_surr, i_data) in enumerate((1, 2)):
+
+            y = grp_data[:, i_data]
+
+            curr_coefs = regress(x, y)
+
+            coefs[i_grp, i_surr, 0] = curr_coefs[1, 0]
+
+            cis = scipy.stats.scoreatpercentile(
+                curr_coefs[1, 1:],
+                [2.5, 97.5]
+            )
+
+            coefs[i_grp, i_surr, 1:] = cis
+
+    np.random.seed()
+
+    return coefs
+
+
 def regress(x, y, n_boot=10000):
 
     coef = np.empty((2, n_boot + 1))
@@ -340,7 +373,11 @@ def figure():
     grid = page.Add("grid")
 
     grid.columns.val = 2
-    grid.rows.val = 4
+    grid.rows.val = 2
+
+    grid.leftMargin.val = grid.rightMargin.val = "0cm"
+    grid.topMargin.val = "0.2cm"
+    grid.bottomMargin.val = "0cm"
 
     fine_x = np.linspace(0, 100, 100)
 
@@ -348,7 +385,9 @@ def figure():
 
         i_denom = 0
 
-        for i_num in (1, 2):
+        column = 1
+
+        for (i_num, surr_str) in zip((1, 2), ("Orth.", "Parallel")):
 
             graph = grid.Add("graph", autoadd=False)
 
@@ -364,7 +403,7 @@ def figure():
 
             points.PlotLine.hide.val = True
             points.MarkerLine.hide.val = True
-            points.MarkerFill.transparency.val = 80
+            points.MarkerFill.transparency.val = 0
             points.markerSize.val = "2pt"
 
             coefs = regress(curr_data[:, i_denom], curr_data[:, i_num])
@@ -390,39 +429,36 @@ def figure():
             fit_xy.ErrorBarLine.style.val = "dashed"
 
             x_axis.min.val = y_axis.min.val = 0.0
-            x_axis.max.val = y_axis.max.val = 100.0
+            x_axis.max.val = 50.0
+            y_axis.max.val = 100.0
+
+            x_axis.label.val = "No-surround threshold"
+            y_axis.label.val = surr_str + " surround threshold"
 
             x_axis.outerticks.val = y_axis.outerticks.val = True
 
-            r_graph = grid.Add("graph", autoadd=False)
+            if column == 1:
+                group_label = graph.Add("label")
+                group_label.label.val = {
+                    "C": "Control",
+                    "P": "Patient"
+                }[curr_group]
 
-            r_graph.aspect.val = 1.0
+                group_label.xPos.val = 1
+                group_label.yPos.val = 1.1
+                group_label.Text.bold.val = True
+                group_label.Text.size.val = "10pt"
 
-            x_axis = r_graph.Add("axis")
-            y_axis = r_graph.Add("axis")
-
-            r_xy = r_graph.Add("xy")
-
-            r_xy.xData.val = curr_data[:, i_denom]
-            r_xy.yData.val = curr_ratios[:, (i_num - 1)]
-
-            r_xy.PlotLine.hide.val = True
-
-            r_fit = fit[0, 1:] / fine_x[1:]
-
-            fit_r = r_graph.Add("xy")
-
-            fit_r.xData.val = fine_x[1:]
-            fit_r.yData.val = r_fit
-
-            fit_r.MarkerFill.hide.val = fit_r.MarkerLine.hide.val = True
+            column += 1
 
     stem = os.path.join(
         conf.figures_path,
         "ss_timing_yoon"
     )
 
+    embed.Zoom(0.5)
     embed.Save(stem + ".vsz")
+    embed.Export(stem + ".pdf")
 
     embed.WaitForClose()
 
