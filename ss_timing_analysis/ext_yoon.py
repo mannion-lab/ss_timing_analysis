@@ -167,14 +167,65 @@ def regress_perm(n_perm=10000):
 
     data = load_data()
 
-    for (i_group, group) in enumerate(data):
+    coefs = regress_descriptives()[..., 0]
 
-        perm_dist = np.empty((n_perm))
-        perm_dist.fill(np.nan)
+    n_c = data[0].shape[0]
+    n_p = data[1].shape[0]
 
-        for i_perm in xrange(n_perm):
+    # combine groups
+    b_data = np.vstack(data)
 
-            pass
+    perm_dist = np.full(n_perm, np.nan)
+
+    for i_perm in xrange(n_perm):
+
+        i = np.random.permutation(n_c + n_p)
+
+        i_c = i[:n_c]
+        i_p = i[n_c:]
+
+        assert len(i_p) == n_p
+
+        perm_vals = np.full((2, 2), np.nan)
+
+        for i_ori in xrange(2):
+
+            # control baseline
+            cx = b_data[i_c, 0]
+            cy = b_data[i_c, i_ori]
+
+            c_coef = regress(cx, cy, n_boot=0)[1]
+
+            perm_vals[0, i_ori] = c_coef
+
+            # patient baseline
+            px = b_data[i_p, 0]
+            py = b_data[i_p, i_ori]
+
+            p_coef = regress(px, py, n_boot=0)[1]
+
+            perm_vals[1, i_ori] = p_coef
+
+        perm_val = (
+            (perm_vals[1, 0] - perm_vals[1, 1]) -
+            (perm_vals[0, 0] - perm_vals[0, 1])
+        )
+
+        perm_dist[i_perm] = perm_val
+
+    meas_diff = (
+        (coefs[1, 0] - coefs[1, 1]) -
+        (coefs[0, 0] - coefs[0, 1])
+    )
+
+    p = scipy.stats.percentileofscore(
+        perm_dist,
+        meas_diff
+    )
+
+    p = (p / 2.0) / 100.0
+
+    return perm_dist, p
 
 
 def ratio_perm(n_perm=10000):
@@ -182,40 +233,13 @@ def ratio_perm(n_perm=10000):
     (c_ratios, p_ratios) = get_ratios()
     ratios = np.vstack((c_ratios, p_ratios))
 
-    # main effect of condition
-    perm_dist = np.empty((n_perm))
-    perm_dist.fill(np.nan)
-
-    for i_perm in xrange(n_perm):
-
-        signs = np.random.choice(
-            (-1, +1),
-            ratios.shape[0],
-            replace=True
-        )
-
-        diffs = ratios[:, 0] - ratios[:, 1]
-
-        diffs *= signs
-
-        perm_dist[i_perm] = np.mean(diffs)
-
-    p = scipy.stats.percentileofscore(
-        perm_dist,
-        np.mean(ratios[:, 0] - ratios[:, 1])
-    )
-
-    p = (100 - (p / 2.0)) / 100.0
-
-    # main effect of group
     n_c = c_ratios.shape[0]
     n_p = p_ratios.shape[0]
 
-    b_ratios = np.vstack((c_ratios, p_ratios))
-    b_ratios = np.mean(b_ratios, axis=1)
+    # PS - OS
+    b_ratios = ratios[:, 0] - ratios[:, 1]
 
-    perm_dist = np.empty((n_perm))
-    perm_dist.fill(np.nan)
+    perm_dist = np.full(n_perm, np.nan)
 
     for i_perm in xrange(n_perm):
 
@@ -238,10 +262,36 @@ def ratio_perm(n_perm=10000):
         np.mean(b_ratios[:n_c]) - np.mean(b_ratios[n_c:])
     )
 
-    p = (100 - (p / 2.0)) / 100.0
+    p = (p / 2.0) / 100.0
 
     return perm_dist, p
 
+
+def write_data_for_spss():
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    data = load_data()
+
+    data_path = os.path.join(conf.base_path, "ss_timing_yoon_spss_raw.tsv")
+
+    with open(data_path, "w") as data_file:
+
+        data_file.write(
+            "\t".join(["group", "n", "o", "p"]) + "\n"
+        )
+
+        for (grp_data, grp) in zip(data, ("C", "P")):
+
+            for i_subj in xrange(grp_data.shape[0]):
+
+                row = [grp]
+
+                for i_s in xrange(3):
+
+                    row.append(str(grp_data[i_subj, i_s]))
+
+                data_file.write("\t".join(row) + "\n")
 
 
 def write_ratios_for_spss():
@@ -644,27 +694,38 @@ def bootstrap_regress_test():
     n_c = c_data.shape[0]
     n_p = p_data.shape[0]
 
-    boot_diff = np.empty((10000, 2))
+    boot_diff = np.empty((10000))
     boot_diff.fill(np.nan)
 
     for i_boot in xrange(10000):
 
-        for i_ori in [1, 2]:
+        i_c = np.random.choice(n_c, n_c, replace=True)
+        i_p = np.random.choice(n_p, n_p, replace=True)
 
-            i_c = np.random.choice(n_c, n_c, replace=True)
-            i_p = np.random.choice(n_p, n_p, replace=True)
+        boot_vals = np.full((2, 2), np.nan)
+
+        for i_ori in xrange(2):
 
             cx = c_data[i_c, 0]
             cy = c_data[i_c, i_ori]
 
             c_coef = regress(cx, cy, n_boot=0)[1]
 
+            boot_vals[0, i_ori] = c_coef
+
             px = p_data[i_p, 0]
             py = p_data[i_p, i_ori]
 
             p_coef = regress(px, py, n_boot=0)[1]
 
-            boot_diff[i_boot, i_ori - 1] = c_coef - p_coef
+            boot_vals[1, i_ori] = p_coef
+
+        d = (
+            (boot_vals[1, 0] - boot_vals[1, 1]) -
+            (boot_vals[0, 0] - boot_vals[0, 1])
+        )
+
+        boot_diff[i_boot] = d
 
     return boot_diff
 
@@ -678,18 +739,20 @@ def bootstrap_diff_test():
     n_c = c_data.shape[0]
     n_p = p_data.shape[0]
 
-    boot_diffs = np.empty((10000, 2))
+    boot_diffs = np.empty(10000)
     boot_diffs.fill(np.nan)
 
     for i_boot in xrange(10000):
 
-        for i_ori in xrange(2):
+        i_c = np.random.choice(n_c, n_c, replace=True)
+        i_p = np.random.choice(n_p, n_p, replace=True)
 
-            i_c = np.random.choice(n_c, n_c, replace=True)
-            i_p = np.random.choice(n_p, n_p, replace=True)
+        # patients - controls
+        d = (
+            np.mean(rp_data[i_p, 0] - rp_data[i_p, 1]) -
+            np.mean(rc_data[i_c, 0] - rc_data[i_c, 1])
+        )
 
-            d = np.mean(rc_data[i_c, i_ori]) - np.mean(rp_data[i_p, i_ori])
-
-            boot_diffs[i_boot, i_ori] = d
+        boot_diffs[i_boot] = d
 
     return boot_diffs
