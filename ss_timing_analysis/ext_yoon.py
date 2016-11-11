@@ -163,9 +163,13 @@ def ratio_contrasts():
         _print(diff_str, t, p, ratios.shape[0] - 2)
 
 
-def regress_perm(n_perm=10000):
+def regress_perm(n_perm=10000, data=None):
 
-    data = load_data()
+    if data is not None:
+        (c_data, p_data) = data
+    else:
+        (c_data, p_data) = load_data()
+        data = (c_data, p_data)
 
     coefs = regress_descriptives()[..., 0]
 
@@ -207,14 +211,14 @@ def regress_perm(n_perm=10000):
             perm_vals[1, i_ori] = p_coef
 
         perm_val = (
-            (perm_vals[1, 0] - perm_vals[1, 1]) -
+#            (perm_vals[1, 0] - perm_vals[1, 1]) -
             (perm_vals[0, 0] - perm_vals[0, 1])
         )
 
         perm_dist[i_perm] = perm_val
 
     meas_diff = (
-        (coefs[1, 0] - coefs[1, 1]) -
+#        (coefs[1, 0] - coefs[1, 1]) -
         (coefs[0, 0] - coefs[0, 1])
     )
 
@@ -403,11 +407,12 @@ def regress(x, y, n_boot=10000):
     return np.squeeze(coef)
 
 
-def regress_ci(coef, n_x=100):
+def regress_ci(coef, n_x=100, x=None):
 
     n_boot = coef.shape[1] - 1
 
-    x = np.linspace(0, 100, n_x)
+    if x is None:
+        x = np.linspace(0, 100, n_x)
 
     y = np.empty((3, n_x))
     y.fill(np.nan)
@@ -612,9 +617,13 @@ def figure():
     embed.WaitForClose()
 
 
-def perm_regress_test():
+def perm_regress_test(data=None):
 
-    (c_data, p_data) = load_data()
+    if data is not None:
+        (c_data, p_data) = data
+    else:
+        (c_data, p_data) = load_data()
+        data = (c_data, p_data)
 
     n_c = c_data.shape[0]
     n_p = p_data.shape[0]
@@ -656,10 +665,13 @@ def perm_regress_test():
     return boot_diff
 
 
-def bootstrap_regress_test_cond():
+def bootstrap_regress_test_cond(data=None):
 
-    (c_data, p_data) = load_data()
-    data = (c_data, p_data)
+    if data is not None:
+        (c_data, p_data) = data
+    else:
+        (c_data, p_data) = load_data()
+        data = (c_data, p_data)
 
     n_c = c_data.shape[0]
     n_p = p_data.shape[0]
