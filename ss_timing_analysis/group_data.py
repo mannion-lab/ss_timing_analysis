@@ -202,6 +202,55 @@ def export_group_data_2d():
             writer.writerow(row)
 
 
+def export_scatter_data():
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    fit_data = ss_timing_analysis.group_fit.load_fit_data(exclude=True)
+
+    alphas = fit_data[0][..., 0, 0]
+
+    subscales = {
+        subscale: ss_timing_analysis.dem.get_olife_subscale(
+            subscale=subscale, exclude=True
+        )
+        for subscale in conf.subscales
+    }
+
+    csv_path = os.path.join(
+        conf.group_data_path,
+        "ss_timing_scatter_export.csv"
+    )
+
+    with open(csv_path, "w") as csv_file:
+
+        header = conf.surr_onsets + conf.subscales
+
+        csv_file.write(",".join(header) + "\n")
+
+        for i_subj in xrange(alphas.shape[0]):
+
+            row = []
+
+            for (i_onset, surr_onset) in enumerate(conf.surr_onsets):
+                row.append(
+                    alphas[i_subj, i_onset, 0] - alphas[i_subj, i_onset, 1]
+                )
+
+            for subscale in conf.subscales:
+                row.append(subscales[subscale][i_subj])
+
+            row_str = map(str, row)
+
+            csv_file.write(",".join(row_str) + "\n")
+
+
+    return alphas, subscales
+
+
+
+
+
 def bin_group_data():
 
     conf = ss_timing_analysis.conf.get_conf()

@@ -16,6 +16,7 @@ import ss_timing_analysis.group_data
 import ss_timing_analysis.group_fit
 import ss_timing_analysis.dem
 import ss_timing_analysis.stats
+import ss_timing_analysis.split
 
 
 def _save(embed, conf, name_str, dpi=600, page=0, multi_dpi=150):
@@ -1609,3 +1610,98 @@ def test_retest():
     embed.WaitForClose()
 
 
+def split(save_pdf=False):
+
+    conf = ss_timing_analysis.conf.get_conf()
+
+    split_locs = [50, 40, 30, 20, 10]
+    n_splits = len(split_locs)
+
+    data = ss_timing_analysis.split.split_ana()
+
+    embed = veusz.embed.Embedded("veusz")
+    figutils.set_veusz_style(embed)
+
+    page = embed.Root.Add("page")
+    page.width.val = "10cm"
+    page.height.val = "10cm"
+
+    graph = page.Add("graph", autoadd=False)
+
+    graph.bottomMargin.val = "2.5cm"
+    graph.topMargin.val = "0.2cm"
+    graph.leftMargin.val = "1.5cm"
+    graph.rightMargin.val = "0cm"
+
+    x_axis = graph.Add("axis")
+    y_axis = graph.Add("axis")
+
+    subscale_colours = [
+        "#e41a1c",
+        "#377eb8",
+        "#4daf4a",
+        "#984ea3"
+    ]
+
+    split_lbl = [
+        "< {s1:d}%, >= {s2:d}%".format(
+            s1=sloc, s2=100 - sloc
+        )
+        for sloc in split_locs
+    ]
+
+    embed.SetDataText("split_lbl", split_lbl)
+
+    for (i_sub, sub) in enumerate(conf.subscales):
+
+        embed.SetData(
+            sub,
+            data[:, i_sub, 0],
+            symerr=data[:, i_sub, 1]
+        )
+
+        xy = graph.Add("xy")
+
+        x = np.arange(n_splits) + np.linspace(-0.15, 0.15, 4)[i_sub]
+
+
+        xy.xData.val = x
+        xy.yData.val = sub
+
+        if i_sub == 0:
+            xy.labels.val = "split_lbl"
+
+        xy.MarkerLine.hide.val = False
+        #xy.MarkerLine.transparency.val = 20
+        xy.MarkerFill.hide.val = True
+        #xy.PlotLine.hide.val = True
+        xy.markerSize.val = "2pt"
+        xy.MarkerLine.color.val = subscale_colours[i_sub]
+        xy.PlotLine.color.val = subscale_colours[i_sub]
+        xy.ErrorBarLine.color.val = subscale_colours[i_sub]
+        #xy.marker.val = ana_markers[i_ana]
+        xy.key.val = "".join(sub.title().split("_"))
+        xy.Label.hide.val = True
+
+    key = graph.Add("key")
+
+    key.horzPosn.val = "manual"
+    key.vertPosn.val = "manual"
+    key.horzManual.val = 0.051125165504591
+    key.vertManual.val = 0.79086156527087
+
+    x_axis.mode.val = "labels"
+    x_axis.min.val = -0.5
+    x_axis.max.val = 4.5
+    x_axis.MinorTicks.hide.val = True
+    x_axis.MajorTicks.manualTicks.val = range(n_splits)
+    x_axis.TickLabels.rotate.val = "45"
+
+    x_axis.label.val = "Group split"
+    y_axis.label.val = "Context effect difference (high - low)"
+
+    if save_pdf:
+        _save(embed, conf, "ss_timing_split")
+
+    embed.EnableToolbar(True)
+    embed.WaitForClose()
