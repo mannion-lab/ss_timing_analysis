@@ -272,3 +272,32 @@ def regress_ci(coef, x=None):
     assert np.sum(np.isnan(y)) == 0
 
     return y
+
+
+def get_ratios(data, log_xform):
+
+    (control_data, patient_data) = data
+
+    control_ratios = np.empty((control_data.shape[0], 2))
+    control_ratios.fill(np.nan)
+
+    patient_ratios = np.empty((patient_data.shape[0], 2))
+    patient_ratios.fill(np.nan)
+
+    for (in_data, out_data) in zip(
+        (control_data, patient_data),
+        (control_ratios, patient_ratios)
+    ):
+
+        # orth / none
+        out_data[:, 0] = in_data[:, 1] / in_data[:, 0]
+
+        # par / none
+        out_data[:, 1] = in_data[:, 2] / in_data[:, 0]
+
+
+    if log_xform:
+        control_ratios = np.log(control_ratios)
+        patient_ratios = np.log(patient_ratios)
+
+    return (control_ratios, patient_ratios)
